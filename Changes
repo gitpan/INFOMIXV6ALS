@@ -1,0 +1,202 @@
+Revision history for Perl extension Sjis.
+
+0.40  2009/08/27 00:00:00
+	- support INFOMIX V6 ALS, GB18030, EUC-JP.
+	; created by INABA Hitoshi
+
+0.39  2009/08/06 00:00:00
+	- support Sjis::length, Sjis::substr, Sjis::index and Sjis::rindex.
+	; created by INABA Hitoshi
+
+0.38  2009/08/05 00:00:00
+	- improve qw.
+	- filetest operator before parenthesis '-X ('.
+	- escape sequence of hexadecimal number of one digit.
+	- fix bugs of function charlist_not_qr.
+	; created by INABA Hitoshi
+
+0.37  2009/07/09 00:00:00
+	- separate Tk modules, make-*.pl and test scripts.
+	- remove perl55.bat and perl56.bat.
+	; created by INABA Hitoshi
+
+0.36  2009/05/17 00:00:00
+	- do local $@ before eval.
+	- support Tk::getOpenFile and Tk::getSaveFile.
+	- rewrite in pure batch file perl55.bat, perl56.bat, perl58.bat and perl510.bat.
+	- fixing world writable files in tarball before upload to CPAN [ #38127 ].
+	; created by INABA Hitoshi
+
+0.35  2009/05/06 00:00:00
+	- support do, require and use for user library.
+	- upper compatible function ord and reverse functions only when demanded.
+	- support p modifier of m//, s/// and qr// of perl5.10.
+	- support !~~ operator.
+	- change to secure code, open() to sysopen().
+	- change to secure code, undef %ENV before system().
+	- add make-hp15.pl(HP-15 Hewlett-Packard developed).
+	; created by INABA Hitoshi
+
+0.34  2009/04/01 00:00:00
+	- memorial version on birth day.
+	- Sjis::Tk::* modules pre alpha support.
+	; created by INABA Hitoshi
+
+0.33  2009/02/15 00:00:00
+	- add script perl56.bat.
+	- use Tk --> use Sjis::Tk alpha support.
+	; created by INABA Hitoshi
+
+0.32  2009/02/03 00:00:00
+	- add script perl55.bat.
+	- wildcard globbing of @ARGV on command.com or cmd.exe.
+	- support chr(0x5C) ended path of do '', do "", require '' and require "" on MSWin32.
+	- chdir croak when dirname ends chr(0x5C) on MSWin32.
+	; created by INABA Hitoshi
+
+0.31  2009/01/29 00:00:00
+	- create test data file on execute test.pl.
+	- require run-time module version.
+	- rewrite all about "split" logic.
+	; created by INABA Hitoshi
+
+0.30  2009/01/04 00:00:00
+	- support context when calling lc(), lc, uc(), uc.
+	- support chr(0x5C) ended path on MSWin32.
+	  - file test operators.
+	  - functions lstat(), opendir(), stat() and unlink().
+	  - glob() and <WILDCARD>.
+	- remove pl2ebat.bat, jperl55.bat, jperl58.bat and jperl510.bat.
+	- merge esjis.pl into Sjis.pm.
+	- matched variables $1,$2,$3,... after s/// came to function as it was a description.
+	- support function of chr, ord and reverse again.
+	- add test filetest, pathdir, pathfile and perlmemo.
+	; created at kanmi-kissa Hahaso in Chichibu.
+
+0.29  2008/11/20 00:00:00
+	- remove \G from $your_gap
+	; created by INABA Hitoshi
+
+0.28  2008/09/05 00:00:00
+	- upgrade Makefile.PL
+	- fix backslashed hexadecimal character escapes.
+	- fix backslashed octal character escapes.
+	- cancel upper compatible function of chr, ord and reverse to backward compatibility.
+	- $1,$2,$3... of s/// in script means $2,$3,$4...
+	; created by INABA Hitoshi
+
+0.27  2008/08/28 00:00:00
+	- change tr output ex. (my $aaa = $bbb) =~ tr/XYZ/xyz/;
+	  before:
+	      (my $aaa = $bbb), Esjis::tr($bbb,'XYZ','xyz','');
+	  after:
+	      Esjis::tr((my $aaa = $bbb),'XYZ','xyz','');
+	; created by INABA Hitoshi
+
+0.26  2008/08/27 00:00:00
+	- fix errata.
+	; created by INABA Hitoshi
+
+0.25  2008/08/25 00:00:00
+	- add Big5Plus, GBK and UHC support.
+	; created by INABA Hitoshi
+
+0.24  2008/08/18 00:00:00
+	- cancel \x{HHHH} syntax support in qq, m, s and qr.
+	- escape second octet | of double octet in qq and "" for open() and system().
+	- support \1,\2,\3 syntax of s/// and s'''.
+	- add Japanese document.
+	; created by INABA Hitoshi
+
+0.23  2008/08/11 00:00:00
+	- escape second octet ^ of double octet code in m, s and qr.
+	- remove brace of \x{HHHH} in qq, m, s and qr.
+	; created at cafe mocca in Nagareyama-Otakanomori S.C.
+
+0.22  2008/08/05 00:00:00
+	- support bareword tr, index, rindex and reverse.
+	- avoid "Error: Runtime Exception" of q, qq, '', "" and ``.
+	- remove below bugs.
+	  - escape second octet of double octet code at last q / / string.
+	  - escape second octet \ of double octet code before \ in q / / string.
+	  - / means m / / after print operator.
+	  - m * * rewrite to m { }.
+	  - m - - rewrite to m { }.
+	  - m : : rewrite to m { }.
+	  - m ? ? rewrite to m { }.
+	  - m \ \ rewrite to m { }.
+	  - m ^ ^ rewrite to m { }.
+	  - m | | rewrite to m { }.
+	  - s * * * rewrite to s { } { }.
+	  - s - - - rewrite to s { } { }.
+	  - s : : : rewrite to s { } { }.
+	  - s ? ? ? rewrite to s { } { }.
+	  - s \ \ \ rewrite to s { } { }.
+	  - s ^ ^ ^ rewrite to s { } { }.
+	  - s | | | rewrite to s { } { }.
+	  - qr * * rewrite to qr { }.
+	  - qr - - rewrite to qr { }.
+	  - qr : : rewrite to qr { }.
+	  - qr ? ? rewrite to qr { }.
+	  - qr \ \ rewrite to qr { }.
+	  - qr ^ ^ rewrite to qr { }.
+	  - qr | | rewrite to qr { }.
+	; created by INABA Hitoshi
+
+0.21  2008/07/22 00:00:00
+	- add smoke test script.
+	- remove below bugs.
+	  - remove return $ope of function &e_s2_q.
+	  - remove parameter $ope of function &e_s2 and &e_s2_q.
+	  - add q operator to parameter of function &e_tr_q when delimiter is '/' or '#'.
+	  - add \c@ .. \c_ to $qq_char, $qq_paren, $qq_brace, $qq_bracket and $qq_angle.
+	  - remove unescape and re-escape logic from function &e_m, &e_s1 and &e_qr.
+	  - any characters meaning .*? in qw { } and qw [ ] to (?:$q_char)*?.
+	  - change \s* to \s+ of between split and m.
+	; created by INABA Hitoshi
+
+0.20  2008/07/14 00:00:00
+	- disable below.
+	  - delimiter tr''(), tr''{}, tr''[] and tr''<> of tr///.
+	  - delimiter  y''(),  y''{},  y''[] and  y''<> of y///.
+	  - delimiter  s''(),  s''{},  s''[] and  s''<> of s///.
+	- limit modifier.
+	  - only c, d, s, b and B of tr///.
+	  - only c, d, s, b and B of y///.
+	  - only c, g, i, m, o, s and x of m//.
+	  - only c, g, i, m, o, s and x of //.
+	  - only i, m, s, o and x of qr//.
+	  - only e, g, i, m, o, s and x of s///.
+	- change new line code to LF.
+	- more comment.
+	; created by INABA Hitoshi
+
+0.19  2008/07/03 00:00:00
+	- add code for perl5.10; created by INABA Hitoshi
+
+0.18  2008/05/11 00:00:00
+	- tr///B support; created by INABA Hitoshi
+
+0.17  2008/05/10 00:00:00
+	- correct the document; created by INABA Hitoshi
+
+0.16  2008/05/09 12:00:00
+	- separate run-time routines Esjis.pm, add Sjis.pm; created by INABA Hitoshi
+
+0.15  2008/05/07 00:00:00
+	- remove some limitations; created at COUNTRY FARM CAFE in Ueno
+
+0.14  2008/05/06 00:00:00
+	- remove many bugs and add jperl58.bat, perl58.bat; created at Cafe CORONA in Akihabara
+
+0.13  2008/04/30 00:00:00
+	- remove some limitations and many bugs; created by INABA Hitoshi
+
+0.12  2008/04/27 00:00:00
+	- rename Sjis to esjis, remove some limitations; created by INABA Hitoshi
+
+0.11  2008/04/22 00:00:00
+	- compiler version for perl5.5 and perl5.10; created by INABA Hitoshi
+
+0.10  2008/04/01 00:00:00
+	- original version; created by INABA Hitoshi
