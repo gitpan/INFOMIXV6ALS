@@ -17,9 +17,10 @@ SYNOPSIS
 DESCRIPTION
 
       This software is "Yet Another JPerl" written by Perl.
-      We can write the script in INFOMIX V6 ALS again.
+      We can write the script in INFOMIX V6 ALS.
 
-      This software is a beta version for the public comment.
+      This software treats INFOMIX V6 ALS directly. Therefore, there is not
+      UTF8 flag.
 
 INSTALLATION
 

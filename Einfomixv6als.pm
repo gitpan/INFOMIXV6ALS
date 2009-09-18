@@ -9,9 +9,9 @@ package Einfomixv6als;
 
 use strict;
 use 5.00503;
-use vars qw($VERSION $_warning);
+use vars qw($VERSION $_warning $last_s_matched);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.40 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.41 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -142,21 +142,18 @@ else {
 sub import() {}
 sub unimport() {}
 sub Einfomixv6als::split(;$$$);
-sub Einfomixv6als::tr($$$;$);
+sub Einfomixv6als::tr($$$$;$);
 sub Einfomixv6als::chop(@);
 sub Einfomixv6als::index($$;$);
 sub Einfomixv6als::rindex($$;$);
-sub Einfomixv6als::lc($);
+sub Einfomixv6als::lc(@);
 sub Einfomixv6als::lc_();
-sub Einfomixv6als::uc($);
+sub Einfomixv6als::uc(@);
 sub Einfomixv6als::uc_();
-sub Einfomixv6als::shift_matched_var();
+sub Einfomixv6als::capture($);
 sub Einfomixv6als::ignorecase(@);
-sub Einfomixv6als::chr($);
+sub Einfomixv6als::chr(;$);
 sub Einfomixv6als::chr_();
-sub Einfomixv6als::ord($);
-sub Einfomixv6als::ord_();
-sub Einfomixv6als::reverse(@);
 sub Einfomixv6als::r(;*@);
 sub Einfomixv6als::w(;*@);
 sub Einfomixv6als::x(;*@);
@@ -223,7 +220,10 @@ sub Einfomixv6als::chdir(;$);
 sub Einfomixv6als::do($);
 sub Einfomixv6als::require(;$);
 
-sub INFOMIXV6ALS::length;
+sub INFOMIXV6ALS::ord(;$);
+sub INFOMIXV6ALS::ord_();
+sub INFOMIXV6ALS::reverse(@);
+sub INFOMIXV6ALS::length(;$);
 sub INFOMIXV6ALS::substr($$;$$);
 sub INFOMIXV6ALS::index($$;$);
 sub INFOMIXV6ALS::rindex($$;$);
@@ -430,11 +430,12 @@ sub Einfomixv6als::split(;$$$) {
 #
 # INFOMIX V6 ALS transliteration (tr///)
 #
-sub Einfomixv6als::tr($$$;$) {
+sub Einfomixv6als::tr($$$$;$) {
 
-    my $searchlist      = $_[1];
-    my $replacementlist = $_[2];
-    my $modifier        = $_[3] || '';
+    my $bind_operator   = $_[1];
+    my $searchlist      = $_[2];
+    my $replacementlist = $_[3];
+    my $modifier        = $_[4] || '';
 
     my @char            = $_[0] =~ m/\G ($q_char) /oxmsg;
     my @searchlist      = _charlist_tr($searchlist);
@@ -496,7 +497,13 @@ sub Einfomixv6als::tr($$$;$) {
             }
         }
     }
-    return $tr;
+
+    if ($bind_operator =~ m/ !~ /oxms) {
+        return not $tr;
+    }
+    else {
+        return $tr;
+    }
 }
 
 #
@@ -506,7 +513,7 @@ sub Einfomixv6als::chop(@) {
 
     my $chop;
     if (@_ == 0) {
-        my @char = m/\G ($q_char)/oxmsg;
+        my @char = m/\G ($q_char) /oxmsg;
         $chop = pop @char;
         $_ = join '', @char;
     }
@@ -572,7 +579,7 @@ sub Einfomixv6als::rindex($$;$) {
 #
 # INFOMIX V6 ALS lower case (with parameter)
 #
-sub Einfomixv6als::lc($) {
+sub Einfomixv6als::lc(@) {
 
     local $_ = shift if @_;
 
@@ -582,7 +589,7 @@ sub Einfomixv6als::lc($) {
 
     local $^W = 0;
 
-    return join('', map {$lc{$_}||$_} m/\G ($q_char)/oxmsg);
+    return join('', map {$lc{$_}||$_} m/\G ($q_char) /oxmsg), @_;
 }
 
 #
@@ -596,13 +603,13 @@ sub Einfomixv6als::lc_() {
 
     local $^W = 0;
 
-    return join('', map {$lc{$_}||$_} m/\G ($q_char)/oxmsg);
+    return join('', map {$lc{$_}||$_} m/\G ($q_char) /oxmsg);
 }
 
 #
 # INFOMIX V6 ALS upper case (with parameter)
 #
-sub Einfomixv6als::uc($) {
+sub Einfomixv6als::uc(@) {
 
     local $_ = shift if @_;
 
@@ -612,7 +619,7 @@ sub Einfomixv6als::uc($) {
 
     local $^W = 0;
 
-    return join('', map {$uc{$_}||$_} m/\G ($q_char) /oxmsg);
+    return join('', map {$uc{$_}||$_} m/\G ($q_char) /oxmsg), @_;
 }
 
 #
@@ -630,22 +637,16 @@ sub Einfomixv6als::uc_() {
 }
 
 #
-# INFOMIX V6 ALS shift matched variables
+# INFOMIX V6 ALS regexp capture
 #
-sub Einfomixv6als::shift_matched_var() {
+sub Einfomixv6als::capture($) {
 
-    # $1 --> return
-    # $2 --> $1
-    # $3 --> $2
-    # $4 --> $3
-    my $dollar1 = $1;
-
-    local $@;
-    for (my $digit=1; eval "defined(\$$digit)"; $digit++) {
-        eval sprintf '*%d = *%d', $digit, $digit+1;
+    if ($last_s_matched and ($_[0] =~ m/\A [1-9][0-9]* \z/oxms)) {
+        return $_[0] + 1;
     }
-
-    return $dollar1;
+    else {
+        return $_[0];
+    }
 }
 
 #
@@ -736,10 +737,15 @@ sub Einfomixv6als::ignorecase(@) {
             # rewrite character class or escape character
             elsif (my $char = {
                 '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\d])',
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\h])',
                 '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\v])',
                 '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
+
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A\x0B\x0C\x0D])',
+
+                '\h' => '[\x09\x20]',         # not include \xA0
+                '\v' => '[\x0A\x0B\x0C\x0D]', # not include \x85
+
                 }->{$char[$i]}
             ) {
                 $char[$i] = $char;
@@ -1078,15 +1084,18 @@ sub _charlist {
                 '\a' => "\a",
                 '\e' => "\e",
                 '\d' => '\d',
-                '\h' => '\h',
                 '\s' => '\s',
-                '\v' => '\v',
                 '\w' => '\w',
                 '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\d])',
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\h])',
                 '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\v])',
                 '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
+
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A\x0B\x0C\x0D])',
+
+                '\h' => '[\x09\x20]',         # not include \xA0
+                '\v' => '[\x0A\x0B\x0C\x0D]', # not include \x85
+
             }->{$1};
         }
         elsif ($char[$i] =~ m/\A \\ ($q_char) \z/oxms) {
@@ -1190,7 +1199,15 @@ sub _charlist {
         }
 
         # single character of single octet code
-        elsif ($char[$i] =~ m/\A (?: [\x00-\xFF] | \\d | \\h | \\s | \\v | \\w ) \z/oxms) {
+        elsif ($char[$i] =~ m/\A (?: \\h ) \z/oxms) {
+            push @singleoctet, "\x09", "\x20";
+            $i += 1;
+        }
+        elsif ($char[$i] =~ m/\A (?: \\v ) \z/oxms) {
+            push @singleoctet, "\x0A","\x0B","\x0C","\x0D";
+            $i += 1;
+        }
+        elsif ($char[$i] =~ m/\A (?: [\x00-\xFF] | \\d | \\s | \\w ) \z/oxms) {
             push @singleoctet, $char[$i];
             $i += 1;
         }
@@ -1301,7 +1318,7 @@ sub charlist_not_qr {
 #
 # INFOMIX V6 ALS order to character (with parameter)
 #
-sub Einfomixv6als::chr($) {
+sub Einfomixv6als::chr(;$) {
 
     my $c = @_ ? $_[0] : $_;
 
@@ -1335,57 +1352,6 @@ sub Einfomixv6als::chr_() {
             $c = int($c / 0x100);
         }
         return pack 'C*', @chr;
-    }
-}
-
-#
-# INFOMIX V6 ALS character to order (with parameter)
-#
-sub Einfomixv6als::ord($) {
-
-    local $_ = shift if @_;
-
-    if (m/\A ($q_char) /oxms) {
-        my @ord = unpack 'C*', $1;
-        my $ord = 0;
-        while (my $o = shift @ord) {
-            $ord = $ord * 0x100 + $o;
-        }
-        return $ord;
-    }
-    else {
-        return CORE::ord $_;
-    }
-}
-
-#
-# INFOMIX V6 ALS character to order (without parameter)
-#
-sub Einfomixv6als::ord_() {
-
-    if (m/\A ($q_char) /oxms) {
-        my @ord = unpack 'C*', $1;
-        my $ord = 0;
-        while (my $o = shift @ord) {
-            $ord = $ord * 0x100 + $o;
-        }
-        return $ord;
-    }
-    else {
-        return CORE::ord $_;
-    }
-}
-
-#
-# INFOMIX V6 ALS reverse
-#
-sub Einfomixv6als::reverse(@) {
-
-    if (wantarray) {
-        return CORE::reverse @_;
-    }
-    else {
-        return join '', CORE::reverse(join('',@_) =~ m/\G ($q_char) /oxmsg);
     }
 }
 
@@ -3513,6 +3479,7 @@ sub _MSWin32_5Cended_path {
 # do INFOMIX V6 ALS file
 #
 sub Einfomixv6als::do($) {
+
     my($filename) = @_;
 
     my $realfilename;
@@ -3574,6 +3541,7 @@ ITER_DO:
 # of ISBN 1-56592-149-6 Programming Perl, Second Edition.
 
 sub Einfomixv6als::require(;$) {
+
     local $_ = shift if @_;
     return 1 if $INC{$_};
 
@@ -3630,13 +3598,65 @@ ITER_REQUIRE:
 }
 
 #
-# INFOMIX V6 ALS length by character
+# INFOMIX V6 ALS character to order (with parameter)
 #
-sub INFOMIXV6ALS::length {
+sub INFOMIXV6ALS::ord(;$) {
 
     local $_ = shift if @_;
 
-    return scalar m/\G ($q_char) /oxmsg;
+    if (m/\A ($q_char) /oxms) {
+        my @ord = unpack 'C*', $1;
+        my $ord = 0;
+        while (my $o = shift @ord) {
+            $ord = $ord * 0x100 + $o;
+        }
+        return $ord;
+    }
+    else {
+        return CORE::ord $_;
+    }
+}
+
+#
+# INFOMIX V6 ALS character to order (without parameter)
+#
+sub INFOMIXV6ALS::ord_() {
+
+    if (m/\A ($q_char) /oxms) {
+        my @ord = unpack 'C*', $1;
+        my $ord = 0;
+        while (my $o = shift @ord) {
+            $ord = $ord * 0x100 + $o;
+        }
+        return $ord;
+    }
+    else {
+        return CORE::ord $_;
+    }
+}
+
+#
+# INFOMIX V6 ALS reverse
+#
+sub INFOMIXV6ALS::reverse(@) {
+
+    if (wantarray) {
+        return CORE::reverse @_;
+    }
+    else {
+        return join '', CORE::reverse(join('',@_) =~ m/\G ($q_char) /oxmsg);
+    }
+}
+
+#
+# INFOMIX V6 ALS length by character
+#
+sub INFOMIXV6ALS::length(;$) {
+
+    local $_ = shift if @_;
+
+    local @_ = m/\G ($q_char) /oxmsg;
+    return scalar @_;
 }
 
 #
@@ -3644,24 +3664,30 @@ sub INFOMIXV6ALS::length {
 #
 sub INFOMIXV6ALS::substr ($$;$$) {
 
-    if (defined $_[3]) {
-        if (defined $_[4]) {
-            my(undef,$offset,$length,$replacement) = @_;
-            if ($_[0] =~ s/\A ((?:$q_char){$offset}) ((?:$q_char){0,$length}) \z/$1$replacement/xms) {
-                return $2;
-            }
+    my @char = $_[0] =~ m/\G ($q_char) /oxmsg;
+
+    # substr($string,$offset,$length,$replacement)
+    if (@_ == 4) {
+        my(undef,$offset,$length,$replacement) = @_;
+        my $substr = join '', splice(@char, $offset, $length, $replacement);
+        $_[0] = join '', @char;
+        return $substr;
+    }
+
+    # substr($string,$offset,$length)
+    elsif (@_ == 3) {
+        my(undef,$offset,$length) = @_;
+        return join '', (@char[$offset .. $#char])[0 .. $length-1];
+    }
+
+    # substr($string,$offset)
+    else {
+        my(undef,$offset) = @_;
+        if ($offset >= 0) {
+            return join '', @char[$offset .. $#char];
         }
         else {
-            my($expr,$offset,$length) = @_;
-            if ($expr =~ m/\A (?:$q_char){$offset} ((?:$q_char){0,$length}) \z/xms) {
-                return $1;
-            }
-        }
-    }
-    else {
-        my($expr,$offset) = @_;
-        if ($expr =~ m/\A (?:$q_char){$offset} (.*) \z/xms) {
-            return $1;
+            return join '', @char[($#char+$offset+1) .. $#char];
         }
     }
 
@@ -3675,10 +3701,10 @@ sub INFOMIXV6ALS::index($$;$) {
 
     my $index;
     if (@_ == 3) {
-        $index = Einfomixv6als::index($_[0],$_[1],$_[2]);
+        $index = Einfomixv6als::index($_[0], $_[1], CORE::length(INFOMIXV6ALS::substr($_[0], 0, $_[2])));
     }
     else {
-        $index = Einfomixv6als::index($_[0],$_[1]);
+        $index = Einfomixv6als::index($_[0], $_[1]);
     }
 
     if ($index == -1) {
@@ -3696,10 +3722,10 @@ sub INFOMIXV6ALS::rindex($$;$) {
 
     my $rindex;
     if (@_ == 3) {
-        $rindex = Einfomixv6als::rindex($_[0],$_[1],$_[2]);
+        $rindex = Einfomixv6als::rindex($_[0], $_[1], CORE::length(INFOMIXV6ALS::substr($_[0], 0, $_[2])));
     }
     else {
-        $rindex = Einfomixv6als::rindex($_[0],$_[1]);
+        $rindex = Einfomixv6als::rindex($_[0], $_[1]);
     }
 
     if ($rindex == -1) {
@@ -3736,13 +3762,10 @@ Einfomixv6als - Run-time routines for INFOMIXV6ALS.pm
     Einfomixv6als::lc_;
     Einfomixv6als::uc(...);
     Einfomixv6als::uc_;
-    Einfomixv6als::shift_matched_var();
+    Einfomixv6als::capture(...);
     Einfomixv6als::ignorecase(...);
     Einfomixv6als::chr(...);
     Einfomixv6als::chr_;
-    Einfomixv6als::ord(...);
-    Einfomixv6als::ord_;
-    Einfomixv6als::reverse(...);
     Einfomixv6als::X ...;
     Einfomixv6als::X_;
     Einfomixv6als::glob(...);
@@ -3757,6 +3780,9 @@ Einfomixv6als - Run-time routines for INFOMIXV6ALS.pm
     Einfomixv6als::do(...);
     Einfomixv6als::require(...);
 
+    INFOMIXV6ALS::ord(...);
+    INFOMIXV6ALS::ord_;
+    INFOMIXV6ALS::reverse(...);
     INFOMIXV6ALS::length(...);
     INFOMIXV6ALS::substr(...);
     INFOMIXV6ALS::index(...);
@@ -3831,13 +3857,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 =item Transliteration
 
-  $tr = Einfomixv6als::tr($string,$searchlist,$replacementlist,$modifier);
-  $tr = Einfomixv6als::tr($string,$searchlist,$replacementlist);
+  $tr = Einfomixv6als::tr($variable,$bind_operator,$searchlist,$replacementlist,$modifier);
+  $tr = Einfomixv6als::tr($variable,$bind_operator,$searchlist,$replacementlist);
 
   This function scans a INFOMIX V6 ALS string character by character and replaces all
   occurrences of the characters found in $searchlist with the corresponding character
   in $replacementlist. It returns the number of characters replaced or deleted.
-  If no INFOMIX V6 ALS string is specified via =~ operator, the $_ string is translated.
+  If no INFOMIX V6 ALS string is specified via =~ operator, the $_ variable is translated.
   $modifier are:
 
   Modifier   Meaning
@@ -3896,17 +3922,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   This is the internal function implementing the \U escape in double-quoted
   strings.
 
-=item Shift matched variables
+=item Make capture number
 
-  $dollar1 = Einfomixv6als::shift_matched_var();
+  $capturenumber = Einfomixv6als::capture($string);
 
-  This function is internal use to s/ / /.
+  This function is internal use to m/ /i, s/ / /i, split and qr/ /i.
 
 =item Make ignore case string
 
   @ignorecase = Einfomixv6als::ignorecase(@string);
 
-  This function is internal use to m/ /i, s/ / /i and qr/ /i.
+  This function is internal use to m/ /i, s/ / /i, split and qr/ /i.
 
 =item Make character
 
@@ -3916,33 +3942,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   This function returns the character represented by that $code in the character
   set. For example, Einfomixv6als::chr(65) is "A" in either ASCII or INFOMIX V6 ALS, and
   Einfomixv6als::chr(0x82a0) is a INFOMIX V6 ALS HIRAGANA LETTER A. For the reverse of Einfomixv6als::chr,
-  use Einfomixv6als::ord.
-
-=item Order of Character
-
-  $ord = Einfomixv6als::ord($string);
-  $ord = Einfomixv6als::ord_;
-
-  This function returns the numeric value (ASCII or INFOMIX V6 ALS) of the first character
-  of $string. The return value is always unsigned.
-
-=item Reverse list or string
-
-  @reverse = Einfomixv6als::reverse(@list);
-  $reverse = Einfomixv6als::reverse(@list);
-
-  In list context, this function returns a list value consisting of the elements of
-  @list in the opposite order. The function can be used to create descending sequences:
-
-  for (Einfomixv6als::reverse(1 .. 10)) { ... }
-
-  Because of the way hashes flatten into lists when passed as a @list, reverse can also
-  be used to invert a hash, presuming the values are unique:
-
-  %barfoo = Einfomixv6als::reverse(%foobar);
-
-  In scalar context, the function concatenates all the elements of LIST and then returns
-  the reverse of that resulting string, character by character.
+  use INFOMIXV6ALS::ord.
 
 =item File test operator -X
 
@@ -4192,6 +4192,32 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   it'll return true otherwise.
 
   See also do file.
+
+=item Order of Character
+
+  $ord = INFOMIXV6ALS::ord($string);
+  $ord = INFOMIXV6ALS::ord_;
+
+  This function returns the numeric value (ASCII or INFOMIX V6 ALS) of the first character
+  of $string. The return value is always unsigned.
+
+=item Reverse list or string
+
+  @reverse = INFOMIXV6ALS::reverse(@list);
+  $reverse = INFOMIXV6ALS::reverse(@list);
+
+  In list context, this function returns a list value consisting of the elements of
+  @list in the opposite order. The function can be used to create descending sequences:
+
+  for (INFOMIXV6ALS::reverse(1 .. 10)) { ... }
+
+  Because of the way hashes flatten into lists when passed as a @list, reverse can also
+  be used to invert a hash, presuming the values are unique:
+
+  %barfoo = INFOMIXV6ALS::reverse(%foobar);
+
+  In scalar context, the function concatenates all the elements of LIST and then returns
+  the reverse of that resulting string, character by character.
 
 =item length by INFOMIX V6 ALS character
 
