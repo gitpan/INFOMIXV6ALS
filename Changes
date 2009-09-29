@@ -1,4 +1,9 @@
-Revision history for Perl extension Sjis.
+Revision history for this software.
+
+0.42  2009/09/28 00:00:00
+	- rewrite split(m/^/) to split(m/^/m) on any version of perl.
+	- fix bug of function Sjis::substr().
+	; created by INABA Hitoshi
 
 0.41  2009/09/18 00:00:00
 	- add test script.
