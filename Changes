@@ -1,5 +1,10 @@
 Revision history for this software.
 
+0.43  2009/10/12 00:00:00
+	- support UTF-2 (aka UTF-8).
+	- fix bug of join separated multiple octet of EUCJP, INFOMIXV6ALS and GB18030.
+	; created by INABA Hitoshi
+
 0.42  2009/09/28 00:00:00
 	- rewrite split(m/^/) to split(m/^/m) on any version of perl.
 	- fix bug of function Sjis::substr().

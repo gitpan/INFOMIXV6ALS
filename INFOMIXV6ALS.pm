@@ -12,7 +12,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.42 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.43 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -2706,16 +2706,15 @@ sub e_qr {
         }
 
         # join separated multiple octet
-        elsif ($char[$i] =~ m/\A \\ (?:20[1-7]|2[123][0-7]|3[4-6][0-7]|37[0-4]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+        elsif ($char[$i] =~ m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms) {
+            if (   ($i+3 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+3]) == 3) and (eval(sprintf '"%s%s%s%s"', @char[$i..$i+3]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 3;
             }
-        }
-        elsif ($char[$i] =~ m/\A \\x (?:8[1-9A-Fa-f]|9[0-9A-Fa-f]|[Ee][0-9A-Fa-f]|[Ff][0-9A-Ca-c]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+            elsif (($i+2 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+2]) == 2) and (eval(sprintf '"%s%s%s"',   @char[$i..$i+2]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 2;
+            }
+            elsif (($i+1 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, $char[$i+1      ]) == 1) and (eval(sprintf '"%s%s"',     @char[$i..$i+1]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 1;
             }
         }
 
@@ -3042,16 +3041,15 @@ sub e_s1 {
         }
 
         # join separated multiple octet
-        elsif ($char[$i] =~ m/\A \\ (?:20[1-7]|2[123][0-7]|3[4-6][0-7]|37[0-4]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+        elsif ($char[$i] =~ m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms) {
+            if (   ($i+3 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+3]) == 3) and (eval(sprintf '"%s%s%s%s"', @char[$i..$i+3]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 3;
             }
-        }
-        elsif ($char[$i] =~ m/\A \\x (?:8[1-9A-Fa-f]|9[0-9A-Fa-f]|[Ee][0-9A-Fa-f]|[Ff][0-9A-Ca-c]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+            elsif (($i+2 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+2]) == 2) and (eval(sprintf '"%s%s%s"',   @char[$i..$i+2]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 2;
+            }
+            elsif (($i+1 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, $char[$i+1      ]) == 1) and (eval(sprintf '"%s%s"',     @char[$i..$i+1]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 1;
             }
         }
 
@@ -3518,16 +3516,15 @@ sub e_split {
         }
 
         # join separated multiple octet
-        elsif ($char[$i] =~ m/\A \\ (?:20[1-7]|2[123][0-7]|3[4-6][0-7]|37[0-4]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+        elsif ($char[$i] =~ m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms) {
+            if (   ($i+3 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+3]) == 3) and (eval(sprintf '"%s%s%s%s"', @char[$i..$i+3]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 3;
             }
-        }
-        elsif ($char[$i] =~ m/\A \\x (?:8[1-9A-Fa-f]|9[0-9A-Fa-f]|[Ee][0-9A-Fa-f]|[Ff][0-9A-Ca-c]) \z/oxms) {
-            if ($i < $#char) {
-                $char[$i] .= $char[$i+1];
-                splice @char, $i+1, 1;
+            elsif (($i+2 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, @char[$i+1..$i+2]) == 2) and (eval(sprintf '"%s%s%s"',   @char[$i..$i+2]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 2;
+            }
+            elsif (($i+1 <= $#char) and (grep(m/\A (?: \\ [0-7]{2,3} | \\x [0-9A-Fa-f]{1,2}) \z/oxms, $char[$i+1      ]) == 1) and (eval(sprintf '"%s%s"',     @char[$i..$i+1]) =~ m/\A $q_char \z/oxms)) {
+                $char[$i] .= join '', splice @char, $i+1, 1;
             }
         }
 
@@ -4173,21 +4170,21 @@ escape for multiple quote type.
     ex.3
         print <<"END";
         ============================================================
-        Escaped for MULTIPLE quote document.   --- OK
+        Escaped for DOUBLE quote document.   --- OK
         ============================================================
         END
 
     ex.4
         print <<END;
         ============================================================
-        Escaped for MULTIPLE quote document.   --- OK
+        Escaped for DOUBLE quote document.   --- OK
         ============================================================
         END
 
     ex.5
         print <<`END`;
         ============================================================
-        Escaped for MULTIPLE quote command.   --- OK
+        Escaped for DOUBLE quote command.   --- OK
         ============================================================
         END
 
@@ -4205,28 +4202,28 @@ escape for multiple quote type.
     ex.7
         print <<"END1", <<"END2";
         ============================================================
-        Escaped for MULTIPLE quote document.   --- OK
+        Escaped for DOUBLE quote document.   --- OK
         ============================================================
         END1
         ============================================================
-        Escaped for MULTIPLE quote document.   --- OK
+        Escaped for DOUBLE quote document.   --- OK
         ============================================================
         END2
 
     ex.8
         print <<'END1', <<"END2", <<'END3';
         ============================================================
-        Escaped for MULTIPLE quote document 'END1', "END2", 'END3'.
+        Escaped for DOUBLE quote document 'END1', "END2", 'END3'.
         'END1' and 'END3' see string rewritten for "END2".
         ============================================================
         END1
         ============================================================
-        Escaped for MULTIPLE quote document "END2", 'END3'.
+        Escaped for DOUBLE quote document "END2", 'END3'.
         'END3' see string rewritten for "END2".
         ============================================================
         END2
         ============================================================
-        Escaped for MULTIPLE quote document "END3".
+        Escaped for DOUBLE quote document "END3".
         'END3' see string rewritten for "END2".
         ============================================================
         END3
@@ -4234,17 +4231,17 @@ escape for multiple quote type.
     ex.9
         print <<"END1", <<'END2', <<"END3";
         ============================================================
-        Escaped for MULTIPLE quote document "END1", 'END2', "END3".
+        Escaped for DOUBLE quote document "END1", 'END2', "END3".
         'END2' see string rewritten for "END1" and "END3".
         ============================================================
         END1
         ============================================================
-        Escaped for MULTIPLE quote document 'END2', "END3".
+        Escaped for DOUBLE quote document 'END2', "END3".
         'END2' see string rewritten for "END3".
         ============================================================
         END2
         ============================================================
-        Escaped for MULTIPLE quote document.   --- OK
+        Escaped for DOUBLE quote document.   --- OK
         ============================================================
         END3
 
@@ -4494,7 +4491,7 @@ I am thankful to all persons.
  http://www.perl.org/
 
  Kazumasa Utashiro, jcode.pl
- http://www.srekcah.org/jcode/
+ ftp://ftp.iij.ad.jp/pub/IIJ/dist/utashiro/perl/
 
  Jeffrey E. F. Friedl, Mastering Regular Expressions
  http://www.oreilly.com/catalog/regex/index.html

@@ -73,7 +73,7 @@ positions fall entirely into the INFOMIX V6 ALS code space.
 * ALGORITHM #1
 
  When the character is taken out of the octet string, it is necessary to
-distinguish a single octet character and the double octet character.
+distinguish a single octet character and the multiple octet character.
 The distinction is done only by first octet.
 
     Single octet code is:
@@ -90,7 +90,7 @@ The distinction is done only by first octet.
 
     MALFORMED single octet code is:
       0x80-0xA0 and 0xE0-0xFE
-      * Final octet of string like first octet of double octet code
+      * Final octet of string like first octet of multiple octet code
 
 See also code table:
 
@@ -213,10 +213,10 @@ See also code table:
 
     *MALFORMED* Single octet code
 
-Final octet of string like first octet of double octet code
+Final octet of string like first octet of multiple octet code
 
 Even if malformed, it is not ignored and not deleted automatically.
-For example, Esjis::chop function returns this octet.
+For example, Einfomixv6als::chop function returns this octet.
 
    0 1 2 3 4 5 6 7 8 9 A B C D E F 
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
