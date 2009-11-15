@@ -12,7 +12,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.43 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.44 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -607,14 +607,29 @@ sub escape {
 # ignore space, comment
     elsif (/\G (\s+|\#.*) /oxgc) { return $1; }
 
-# if (, elsif (, unless (, while ( and until (
-    elsif (/\G ( (?: if | elsif | unless | while | until ) \s* \( ) /oxgc) {
+# if (, elsif (, unless (, while (, until (, given ( and when (
+
+    # given, when
+    #
+    # P.225 The given Statement
+    # in Chapter 15: Smart Matching and given-when
+    # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+
+    elsif (/\G ( (?: if | elsif | unless | while | until | given | when ) \s* \( ) /oxgc) {
         $slash = 'm//';
         return $1;
     }
 
 # scalar variable ($scalar = ...) =~ tr///;
 # scalar variable ($scalar = ...) =~ s///;
+
+    # state
+    #
+    # P.68 Persistent, Private Variables
+    # in Chapter 4: Subroutines
+    # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+    # (and so on)
+
     elsif (/\G ( \( \s* (?: local \b | my \b | our \b | state \b )? \s* \$ $qq_scalar ) /oxgc) {
         my $e_string = e_string($1);
 
@@ -785,47 +800,81 @@ sub escape {
     elsif (m{\G \b lc    (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lc';           }
     elsif (m{\G \b uc    (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::uc';           }
 
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\") ((?:$qq_char)+?)             (\") }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('',  $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    # stacked file test operators
+    #
+    # P.179 File Test Operators
+    # in Chapter 12: File Tests
+    # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+    # (and so on)
 
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('',  $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc) { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                                                           \s* (\") ((?:$qq_char)+?)             (\") }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('',  $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; }
+
+    elsif (m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                                                           \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('',  $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc) { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; }
+
+    elsif (m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+) (\$ \w+(?: ::\w+)* (?: (?: ->)? (?: \( (?:$qq_paren)*? \) | \{ (?:$qq_brace)+? \} | \[ (?:$qq_bracket)+? \] ) )*) }oxgc)
+                                                                                                             { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1),$2)"; }
+    elsif (m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+) \( ((?:$qq_paren)*?) \) }oxgc)
+                                                                                                             { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1),$2)"; }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) (?= [a-z]+) }oxgc)                                   { $slash = 'm//'; return "Einfomixv6als::filetest qw($1),";    }
+    elsif (m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) (\w+) }oxgc)                                         { $slash = 'm//'; return "Einfomixv6als::filetest(qw($1),$2)"; }
+
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\") ((?:$qq_char)+?)             (\") }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('',  $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; }
+
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('',  $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc)    { $slash = 'm//'; return "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; }
 
     elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* (\$ \w+(?: ::\w+)* (?: (?: ->)? (?: \( (?:$qq_paren)*? \) | \{ (?:$qq_brace)+? \} | \[ (?:$qq_bracket)+? \] ) )*) }oxgc)
-                                                                                                          { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* \( ((?:$qq_paren)*?) \) }oxgc)                       { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) (?= \s+ [a-z]+) }oxgc)                                   { $slash = 'm//'; return "Einfomixv6als::$1";     }
-    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ (\w+) }oxgc)                                         { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
+                                                                                                             { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* \( ((?:$qq_paren)*?) \) }oxgc)                          { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) (?= \s+ [a-z]+) }oxgc)                                      { $slash = 'm//'; return "Einfomixv6als::$1";     }
+    elsif (m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ (\w+) }oxgc)                                            { $slash = 'm//'; return "Einfomixv6als::$1($2)"; }
 
-    elsif (m{\G \b lstat (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lstat';        }
-    elsif (m{\G \b stat  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::stat';         }
-    elsif (m{\G \b chr   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chr';          }
-    elsif (m{\G \b ord   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'div'; return   $function_ord;         }
-    elsif (m{\G \b glob  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::glob';         }
-    elsif (m{\G \b lc \b      (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lc_';          }
-    elsif (m{\G \b uc \b      (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::uc_';          }
+    elsif (m{\G \b lstat (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lstat';              }
+    elsif (m{\G \b stat  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::stat';               }
+    elsif (m{\G \b chr   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chr';                }
+    elsif (m{\G \b ord   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'div'; return   $function_ord;               }
+    elsif (m{\G \b glob  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $slash = 'm//'; return   'Einfomixv6als::glob';               }
+    elsif (m{\G \b lc \b      (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lc_';                }
+    elsif (m{\G \b uc \b      (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::uc_';                }
+    elsif (m{\G    (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                           \b (?! \s* => )                    }oxgc) { $slash = 'm//'; return   "Einfomixv6als::filetest_(qw($1))";  }
     elsif (m{\G    -([rwxoRWXOezsfdlpSbctugkTBMAC])
-                           \b (?! \s* => )                    }oxgc) { $slash = 'm//'; return   "Einfomixv6als::${1}_";        }
-    elsif (m{\G \b lstat \b   (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lstat_';       }
-    elsif (m{\G \b stat \b    (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::stat_';        }
-    elsif (m{\G \b chr \b     (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chr_';         }
-    elsif (m{\G \b ord \b     (?! \s* => )                    }oxgc) { $slash = 'div'; return   $function_ord_;        }
-    elsif (m{\G \b glob \b    (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::glob_';        }
-    elsif (m{\G \b reverse \b (?! \s* => )                    }oxgc) { $slash = 'm//'; return   $function_reverse;     }
-    elsif (m{\G \b opendir (\s* \( \s*) (?=[A-Za-z_])         }oxgc) { $slash = 'm//'; return   "Einfomixv6als::opendir$1*";   }
-    elsif (m{\G \b opendir (\s+)        (?=[A-Za-z_])         }oxgc) { $slash = 'm//'; return   "Einfomixv6als::opendir$1*";   }
-    elsif (m{\G \b unlink \b  (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::unlink';       }
-    elsif (m{\G \b chdir \b   (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chdir';        }
+                           \b (?! \s* => )                    }oxgc) { $slash = 'm//'; return   "Einfomixv6als::${1}_";              }
+    elsif (m{\G \b lstat \b   (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::lstat_';             }
+    elsif (m{\G \b stat \b    (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::stat_';              }
+    elsif (m{\G \b chr \b     (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chr_';               }
+    elsif (m{\G \b ord \b     (?! \s* => )                    }oxgc) { $slash = 'div'; return   $function_ord_;              }
+    elsif (m{\G \b glob \b    (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::glob_';              }
+    elsif (m{\G \b reverse \b (?! \s* => )                    }oxgc) { $slash = 'm//'; return   $function_reverse;           }
+    elsif (m{\G \b opendir (\s* \( \s*) (?=[A-Za-z_])         }oxgc) { $slash = 'm//'; return   "Einfomixv6als::opendir$1*";         }
+    elsif (m{\G \b opendir (\s+)        (?=[A-Za-z_])         }oxgc) { $slash = 'm//'; return   "Einfomixv6als::opendir$1*";         }
+    elsif (m{\G \b unlink \b  (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::unlink';             }
+    elsif (m{\G \b chdir \b   (?! \s* => )                    }oxgc) { $slash = 'm//'; return   'Einfomixv6als::chdir';              }
 
 # split
     elsif (m{\G \b (split) \b (?! \s* => ) }oxgc) {
@@ -1717,6 +1766,21 @@ sub escape {
             ) /oxgc) { $slash = 'div'; return $1; }
 
     # any operator before m//
+
+    # //, //= (defined-or)
+    #
+    # P.164 Logical Operators
+    # in Chapter 10: More Control Structures
+    # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+    # (and so on)
+
+    # ~~
+    #
+    # P.221 The Smart Match Operator
+    # in Chapter 15: Smart Matching and given-when
+    # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+    # (and so on)
+
     elsif (/\G (
 
             !~~ | !~ | != | ! |
@@ -1862,46 +1926,73 @@ E_STRING_LOOP:
         elsif ($string =~ m{\G \b lc    (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::lc';            $slash = 'm//'; }
         elsif ($string =~ m{\G \b uc    (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::uc';            $slash = 'm//'; }
 
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\") ((?:$qq_char)+?)             (\") }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('',  $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                                                                          \s* (\") ((?:$qq_char)+?)             (\") }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('',  $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
 
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('',  $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc) { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                                                                          \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('',  $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc) { $e_string .= "Einfomixv6als::filetest(qw($1)," . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+
+        elsif ($string =~ m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+) (\$ \w+(?: ::\w+)* (?: (?: ->)? (?: \( (?:$qq_paren)*? \) | \{ (?:$qq_brace)+? \} | \[ (?:$qq_bracket)+? \] ) )*) }oxgc)
+                                                                                                                            { $e_string .= "Einfomixv6als::filetest(qw($1),$2)"; $slash = 'm//'; }
+        elsif ($string =~ m{\G (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+) \( ((?:$qq_paren)*?) \) }oxgc)
+                                                                                                                            { $e_string .= "Einfomixv6als::filetest(qw($1),$2)"; $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) (?= [a-z]+) }oxgc)                                   { $e_string .= "Einfomixv6als::filetest qw($1),";    $slash = 'm//'; }
+        elsif ($string =~ m{\G ((?:-[rwxoRWXOezfdlpSbctugkTB]\s+){2,}) (\w+) }oxgc)                                         { $e_string .= "Einfomixv6als::filetest(qw($1),$2)"; $slash = 'm//'; }
+
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\") ((?:$qq_char)+?)             (\") }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('',  $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\#) ((?:$qq_char)+?)             (\#) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\() ((?:$qq_paren)+?)            (\)) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\{) ((?:$qq_brace)+?)            (\}) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\[) ((?:$qq_bracket)+?)          (\]) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\<) ((?:$qq_angle)+?)            (\>) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ qq \s* (\S) ((?:$qq_char)+?)             (\3) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_qq('qq',$2,$4,$3) . ")"; $slash = 'm//'; }
+
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+    \s* (\') ((?:\\\1|\\\\|$q_char)+?)    (\') }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('',  $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\#) ((?:\\\#|\\\\|$q_char)+?)    (\#) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\() ((?:\\\)|\\\\|$q_paren)+?)   (\)) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\{) ((?:\\\}|\\\\|$q_brace)+?)   (\}) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\[) ((?:\\\]|\\\\|$q_bracket)+?) (\]) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\<) ((?:\\\>|\\\\|$q_angle)+?)   (\>) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ q  \s* (\S) ((?:\\\1|\\\\|$q_char)+?)    (\3) }oxgc)    { $e_string .= "Einfomixv6als::$1(" . e_q ('q', $2,$4,$3) . ")"; $slash = 'm//'; }
 
         elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* (\$ \w+(?: ::\w+)* (?: (?: ->)? (?: \( (?:$qq_paren)*? \) | \{ (?:$qq_brace)+? \} | \[ (?:$qq_bracket)+? \] ) )*) }oxgc)
-                                                                                                                         { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* \( ((?:$qq_paren)*?) \) }oxgc)                       { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) (?= \s+ [a-z]+) }oxgc)                                   { $e_string .= "Einfomixv6als::$1";     $slash = 'm//'; }
-        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ (\w+) }oxgc)                                         { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
+                                                                                                                            { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s* \( ((?:$qq_paren)*?) \) }oxgc)                          { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) (?= \s+ [a-z]+) }oxgc)                                      { $e_string .= "Einfomixv6als::$1";     $slash = 'm//'; }
+        elsif ($string =~ m{\G -([rwxoRWXOezsfdlpSbctugkTBMAC]) \s+ (\w+) }oxgc)                                            { $e_string .= "Einfomixv6als::$1($2)"; $slash = 'm//'; }
 
-        elsif ($string =~ m{\G \b lstat (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::lstat';         $slash = 'm//'; }
-        elsif ($string =~ m{\G \b stat  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::stat';          $slash = 'm//'; }
-        elsif ($string =~ m{\G \b chr   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::chr';           $slash = 'm//'; }
-        elsif ($string =~ m{\G \b ord   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   $function_ord;          $slash = 'div'; }
-        elsif ($string =~ m{\G \b glob  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::glob';          $slash = 'm//'; }
-        elsif ($string =~ m{\G \b lc \b                                      }oxgc) { $e_string .=   'Einfomixv6als::lc_';           $slash = 'm//'; }
-        elsif ($string =~ m{\G \b uc \b                                      }oxgc) { $e_string .=   'Einfomixv6als::uc_';           $slash = 'm//'; }
-        elsif ($string =~ m{\G    -([rwxoRWXOezsfdlpSbctugkTBMAC]) \b        }oxgc) { $e_string .=   "Einfomixv6als::${1}_";         $slash = 'm//'; }
-        elsif ($string =~ m{\G \b lstat \b                                   }oxgc) { $e_string .=   'Einfomixv6als::lstat_';        $slash = 'm//'; }
-        elsif ($string =~ m{\G \b stat \b                                    }oxgc) { $e_string .=   'Einfomixv6als::stat_';         $slash = 'm//'; }
-        elsif ($string =~ m{\G \b chr \b                                     }oxgc) { $e_string .=   'Einfomixv6als::chr_';          $slash = 'm//'; }
-        elsif ($string =~ m{\G \b ord \b                                     }oxgc) { $e_string .=   $function_ord_;         $slash = 'div'; }
-        elsif ($string =~ m{\G \b glob \b                                    }oxgc) { $e_string .=   'Einfomixv6als::glob_';         $slash = 'm//'; }
-        elsif ($string =~ m{\G \b reverse \b                                 }oxgc) { $e_string .=   $function_reverse;      $slash = 'm//'; }
-        elsif ($string =~ m{\G \b opendir (\s* \( \s*) (?=[A-Za-z_])         }oxgc) { $e_string .=   "Einfomixv6als::opendir$1*";    $slash = 'm//'; }
-        elsif ($string =~ m{\G \b opendir (\s+)        (?=[A-Za-z_])         }oxgc) { $e_string .=   "Einfomixv6als::opendir$1*";    $slash = 'm//'; }
-        elsif ($string =~ m{\G \b unlink \b                                  }oxgc) { $e_string .=   'Einfomixv6als::unlink';        $slash = 'm//'; }
-        elsif ($string =~ m{\G \b chdir \b                                   }oxgc) { $e_string .=   'Einfomixv6als::chdir';         $slash = 'm//'; }
+        elsif ($string =~ m{\G \b lstat (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::lstat';             $slash = 'm//'; }
+        elsif ($string =~ m{\G \b stat  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::stat';              $slash = 'm//'; }
+        elsif ($string =~ m{\G \b chr   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::chr';               $slash = 'm//'; }
+        elsif ($string =~ m{\G \b ord   (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   $function_ord;              $slash = 'div'; }
+        elsif ($string =~ m{\G \b glob  (?= \s+[A-Za-z_]|\s*['"`\$\@\&\*\(]) }oxgc) { $e_string .=   'Einfomixv6als::glob';              $slash = 'm//'; }
+        elsif ($string =~ m{\G \b lc \b                                      }oxgc) { $e_string .=   'Einfomixv6als::lc_';               $slash = 'm//'; }
+        elsif ($string =~ m{\G \b uc \b                                      }oxgc) { $e_string .=   'Einfomixv6als::uc_';               $slash = 'm//'; }
+        elsif ($string =~ m{\G    (-[rwxoRWXOezfdlpSbctugkTB](?:\s+-[rwxoRWXOezfdlpSbctugkTB])+)
+                                                                   \b        }oxgc) { $e_string .=   "Einfomixv6als::filetest_(qw($1))"; $slash = 'm//'; }
+        elsif ($string =~ m{\G    -([rwxoRWXOezsfdlpSbctugkTBMAC]) \b        }oxgc) { $e_string .=   "Einfomixv6als::${1}_";             $slash = 'm//'; }
+        elsif ($string =~ m{\G \b lstat \b                                   }oxgc) { $e_string .=   'Einfomixv6als::lstat_';            $slash = 'm//'; }
+        elsif ($string =~ m{\G \b stat \b                                    }oxgc) { $e_string .=   'Einfomixv6als::stat_';             $slash = 'm//'; }
+        elsif ($string =~ m{\G \b chr \b                                     }oxgc) { $e_string .=   'Einfomixv6als::chr_';              $slash = 'm//'; }
+        elsif ($string =~ m{\G \b ord \b                                     }oxgc) { $e_string .=   $function_ord_;             $slash = 'div'; }
+        elsif ($string =~ m{\G \b glob \b                                    }oxgc) { $e_string .=   'Einfomixv6als::glob_';             $slash = 'm//'; }
+        elsif ($string =~ m{\G \b reverse \b                                 }oxgc) { $e_string .=   $function_reverse;          $slash = 'm//'; }
+        elsif ($string =~ m{\G \b opendir (\s* \( \s*) (?=[A-Za-z_])         }oxgc) { $e_string .=   "Einfomixv6als::opendir$1*";        $slash = 'm//'; }
+        elsif ($string =~ m{\G \b opendir (\s+)        (?=[A-Za-z_])         }oxgc) { $e_string .=   "Einfomixv6als::opendir$1*";        $slash = 'm//'; }
+        elsif ($string =~ m{\G \b unlink \b                                  }oxgc) { $e_string .=   'Einfomixv6als::unlink';            $slash = 'm//'; }
+        elsif ($string =~ m{\G \b chdir \b                                   }oxgc) { $e_string .=   'Einfomixv6als::chdir';             $slash = 'm//'; }
 
 # split
         elsif ($string =~ m{\G \b (split) \b (?! \s* => ) }oxgc) {
@@ -2229,7 +2320,7 @@ E_STRING_LOOP:
         # any operator before m//
         elsif ($string =~ /\G (
 
-            != | !~ | ! |
+            !~~ | !~ | != | ! |
             %= | % |
             &&= | && | &= | & |
             -= | -> | - |
@@ -2281,11 +2372,16 @@ sub classic_character_class {
         '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
         '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
 
-        '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
-        '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A\x0B\x0C\x0D])',
+        # \h \v \H \V
+        #
+        # P.114 Character Class Shortcuts
+        # in Chapter 7: In the World of Regular Expressions
+        # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
 
-        '\h' => '[\x09\x20]',         # not include \xA0
-        '\v' => '[\x0A\x0B\x0C\x0D]', # not include \x85
+        '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
+        '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
+        '\h' => '[\t\x20]',
+        '\v' => '[\f\n\r]',
 
     }->{$char};
 }
@@ -3011,19 +3107,23 @@ sub e_s1 {
 
     # split regexp
     my @char = $string =~ m{\G(
-        \\  [0-7]{2,3}             |
-        \\x [0-9A-Fa-f]{1,2}       |
-        \\c [\x40-\x5F]            |
-        \\  (?:$q_char)            |
-        [\$\@] $qq_variable        |
-        \$ \s* \d+                 |
-        \$ \s* \{ \s* \d+ \s* \}   |
-        \$ \$ (?![\w\{])           |
-        \$ \s* \$ \s* $qq_variable |
-        \[\:\^ [a-z]+ \:\]         |
-        \[\:   [a-z]+ \:\]         |
-        \[\^                       |
-        \(\?                       |
+        \\g \s* \{ \s* - \s* [1-9][0-9]* \s* \} |
+        \\g \s* \{ \s*       [1-9][0-9]* \s* \} |
+        \\g \s*              [1-9][0-9]*        |
+        \\                   [1-9][0-9]*        |
+        \\  [0-7]{2,3}                          |
+        \\x [0-9A-Fa-f]{1,2}                    |
+        \\c [\x40-\x5F]                         |
+        \\  (?:$q_char)                         |
+        [\$\@] $qq_variable                     |
+        \$ \s* \d+                              |
+        \$ \s* \{ \s* \d+ \s* \}                |
+        \$ \$ (?![\w\{])                        |
+        \$ \s* \$ \s* $qq_variable              |
+        \[\:\^ [a-z]+ \:\]                      |
+        \[\:   [a-z]+ \:\]                      |
+        \[\^                                    |
+        \(\?                                    |
             (?:$q_char)
     )}oxmsg;
 
@@ -3133,6 +3233,30 @@ sub e_s1 {
 
         # \0 --> \0
         elsif ($char[$i] =~ m/\A \\ \s* 0 \z/oxms) {
+        }
+
+        # \g{N}, \g{-N}
+        #
+        # P.108 Using Simple Patterns
+        # in Chapter 7: In the World of Regular Expressions
+        # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+
+        # \g{-1}, \g{-2}, \g{-3} --> \g{-1}, \g{-2}, \g{-3}
+        elsif ($char[$i] =~ m/\A \\g \s* \{ \s* - \s* ([1-9][0-9]*) \s* \} \z/oxms) {
+        }
+
+        # \g{1}, \g{2}, \g{3} --> \g{2}, \g{3}, \g{4}
+        elsif ($char[$i] =~ m/\A \\g \s* \{ \s* ([1-9][0-9]*) \s* \} \z/oxms) {
+            if ($1 <= $parens) {
+                $char[$i] = '\\g{' . ($1 + 1) . '}';
+            }
+        }
+
+        # \g1, \g2, \g3 --> \g2, \g3, \g4
+        elsif ($char[$i] =~ m/\A \\g \s* ([1-9][0-9]*) \z/oxms) {
+            if ($1 <= $parens) {
+                $char[$i] = '\\g' . ($1 + 1);
+            }
         }
 
         # \1, \2, \3 --> \2, \3, \4
@@ -4002,8 +4126,6 @@ What's this software good for ...
 
 =item * No C programming (for maintain JPerl)
 
-=item * But JPerl compatible
-
 =back
 
 Let's make yet another future by JPerl's future.
@@ -4146,6 +4268,10 @@ http://bugs.activestate.com/show_bug.cgi?id=81839
 /o modifier doesn't do operation the same as the expectation on perl5.010 on the
 Microsoft Windows Vista SP1.
 The latest value of variable $re is used as a regular expression.
+
+=item * Escape character \b and \B
+
+Escape character \b and \B in regular expression doesn't function like our hope.
 
 =item * here document
 
@@ -4417,6 +4543,18 @@ programming environment like at that time.
  Pages: 306
  ISBN 10: 1-56592-324-3 | ISBN 13: 9781565923249
  http://oreilly.com/catalog/9781565923249/
+
+ Learning Perl, Fifth Edition
+ By Randal L. Schwartz, Tom Phoenix, brian d foy
+ June 2008
+ Pages: 352
+ Print ISBN:978-0-596-52010-6 | ISBN 10: 0-596-52010-7
+ Ebook ISBN:978-0-596-10316-3 | ISBN 10: 0-596-10316-6
+ http://oreilly.com/catalog/9780596520113/
+
+ Perl RESOURCE KIT UNIX EDITION
+ Futato, Irving, Jepson, Patwardhan, Siever
+ ISBN 10: 1-56592-370-7
 
  Understanding Japanese Information Processing
  By Ken Lunde

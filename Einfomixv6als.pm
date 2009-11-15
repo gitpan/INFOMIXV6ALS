@@ -11,7 +11,7 @@ use strict;
 use 5.00503;
 use vars qw($VERSION $_warning);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.43 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.44 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -173,6 +173,7 @@ sub Einfomixv6als::capture($);
 sub Einfomixv6als::ignorecase(@);
 sub Einfomixv6als::chr(;$);
 sub Einfomixv6als::chr_();
+sub Einfomixv6als::filetest(@);
 sub Einfomixv6als::r(;*@);
 sub Einfomixv6als::w(;*@);
 sub Einfomixv6als::x(;*@);
@@ -200,6 +201,7 @@ sub Einfomixv6als::B(;*@);
 sub Einfomixv6als::M(;*@);
 sub Einfomixv6als::A(;*@);
 sub Einfomixv6als::C(;*@);
+sub Einfomixv6als::filetest_(@);
 sub Einfomixv6als::r_();
 sub Einfomixv6als::w_();
 sub Einfomixv6als::x_();
@@ -1380,6 +1382,25 @@ sub Einfomixv6als::chr_() {
 }
 
 #
+# INFOMIX V6 ALS stacked file test expr
+#
+sub Einfomixv6als::filetest (@) {
+
+    my $file     = pop @_;
+    my $filetest = substr(pop @_, 1);
+
+    unless (eval qq{Einfomixv6als::$filetest(\$file)}) {
+        return '';
+    }
+    for my $filetest (reverse @_) {
+        unless (eval qq{ $filetest _ }) {
+            return '';
+        }
+    }
+    return 1;
+}
+
+#
 # INFOMIX V6 ALS file test -r expr
 #
 sub Einfomixv6als::r(;*@) {
@@ -2352,6 +2373,24 @@ sub Einfomixv6als::C(;*@) {
         }
     }
     return wantarray ? (undef,@_) : undef;
+}
+
+#
+# INFOMIX V6 ALS stacked file test $_
+#
+sub Einfomixv6als::filetest_ (@) {
+
+    my $filetest = substr(pop @_, 1);
+
+    unless (eval qq{Einfomixv6als::${filetest}_}) {
+        return '';
+    }
+    for my $filetest (reverse @_) {
+        unless (eval qq{ $filetest _ }) {
+            return '';
+        }
+    }
+    return 1;
 }
 
 #
