@@ -12,7 +12,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.44 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.45 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -2101,8 +2101,8 @@ E_STRING_LOOP:
                 my $q_string = '';
                 while ($string !~ /\G \z/oxgc) {
                     if    ($string =~ /\G (\\\\)    /oxgc) { $q_string .= $1; }
-                    elsif ($string =~ /\G (\\\')    /oxgc) { $q_string .= $1; }                               # splitqr'' --> split qr''
-                    elsif ($string =~ /\G \'        /oxgc)                                                    { $e_string .= e_split_q(q{ qr},"'","'",$q_string,''); next E_STRING_LOOP; } # ' ' --> qr ' '
+                    elsif ($string =~ /\G (\\\')    /oxgc) { $q_string .= $1; } # splitqr'' --> split qr''
+                    elsif ($string =~ /\G \'        /oxgc)                      { $e_string .= e_split_q(q{ qr},"'","'",$q_string,''); next E_STRING_LOOP; } # ' ' --> qr ' '
                     elsif ($string =~ /\G ($q_char) /oxgc) { $q_string .= $1; }
                 }
                 croak "$__FILE__: Can't find string terminator anywhere before EOF";
@@ -2113,8 +2113,8 @@ E_STRING_LOOP:
                 my $qq_string = '';
                 while ($string !~ /\G \z/oxgc) {
                     if    ($string =~ /\G (\\\\)    /oxgc) { $qq_string .= $1; }
-                    elsif ($string =~ /\G (\\\")    /oxgc) { $qq_string .= $1; }                              # splitqr"" --> split qr""
-                    elsif ($string =~ /\G \"        /oxgc)                                                    { $e_string .= e_split(q{ qr},'"','"',$qq_string,''); next E_STRING_LOOP; } # " " --> qr " "
+                    elsif ($string =~ /\G (\\\")    /oxgc) { $qq_string .= $1; } # splitqr"" --> split qr""
+                    elsif ($string =~ /\G \"        /oxgc)                       { $e_string .= e_split(q{ qr},'"','"',$qq_string,''); next E_STRING_LOOP; } # " " --> qr " "
                     elsif ($string =~ /\G ($q_char) /oxgc) { $qq_string .= $1; }
                 }
                 croak "$__FILE__: Can't find string terminator anywhere before EOF";
@@ -2125,8 +2125,8 @@ E_STRING_LOOP:
                 my $regexp = '';
                 while ($string !~ /\G \z/oxgc) {
                     if    ($string =~ /\G (\\\\)           /oxgc) { $regexp .= $1; }
-                    elsif ($string =~ /\G (\\\/)           /oxgc) { $regexp .= $1; }                          # splitqr// --> split qr//
-                    elsif ($string =~ /\G \/ ([cgimosxp]*) /oxgc)                                             { $e_string .= e_split(q{ qr}, '/','/',$regexp,$1); next E_STRING_LOOP; } # / / --> qr / /
+                    elsif ($string =~ /\G (\\\/)           /oxgc) { $regexp .= $1; } # splitqr// --> split qr//
+                    elsif ($string =~ /\G \/ ([cgimosxp]*) /oxgc)                    { $e_string .= e_split(q{ qr}, '/','/',$regexp,$1); next E_STRING_LOOP; } # / / --> qr / /
                     elsif ($string =~ /\G ($q_char)        /oxgc) { $regexp .= $1; }
                 }
                 croak "$__FILE__: Search pattern not terminated";
@@ -2215,7 +2215,7 @@ E_STRING_LOOP:
         }
 
 # << (bit shift)   --- not here document
-        elsif ($string =~ /\G ( << \s* ) (?= [0-9\$\@\&] ) /oxgc) { $slash = 'm//'; $e_string .= $1;           }
+        elsif ($string =~ /\G ( << \s* ) (?= [0-9\$\@\&] ) /oxgc) { $slash = 'm//'; $e_string .= $1; }
 
 # <<'HEREDOC'
         elsif ($string =~ /\G ( << '([a-zA-Z_0-9]*)' ) /oxgc) {

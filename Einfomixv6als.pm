@@ -11,7 +11,7 @@ use strict;
 use 5.00503;
 use vars qw($VERSION $_warning);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.44 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.45 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -32,7 +32,7 @@ BEGIN {
 my $your_char = q{\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[\x00-\xFF]};
 
 # regexp of character
-my  $q_char   = qr/$your_char/oxms;
+my $q_char = qr/$your_char/oxms;
 
 #
 # INFOMIX V6 ALS character range per length
@@ -342,6 +342,22 @@ sub Einfomixv6als::split(;$$$) {
     $string = $_ if not defined $string;
 
     my @split = ();
+
+    # when string is empty
+    if ($string eq '') {
+
+        # resulting list value in list context
+        if (wantarray) {
+            return @split;
+        }
+
+        # count of substrings in scalar context
+        else {
+            cluck "$0: Use of implicit split to \@_ is deprecated" if $^W;
+            @_ = @split;
+            return scalar @_;
+        }
+    }
 
     # if $limit is negative, it is treated as if an arbitrarily large $limit has been specified
     if ((not defined $limit) or ($limit <= 0)) {
@@ -766,11 +782,10 @@ sub Einfomixv6als::ignorecase(@) {
                 '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
                 '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
 
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A\x0B\x0C\x0D])',
-
-                '\h' => '[\x09\x20]',         # not include \xA0
-                '\v' => '[\x0A\x0B\x0C\x0D]', # not include \x85
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
+                '\h' => '[\t\x20]',
+                '\v' => '[\f\n\r]',
 
                 }->{$char[$i]}
             ) {
@@ -1116,11 +1131,10 @@ sub _charlist {
                 '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
                 '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
 
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A\x0B\x0C\x0D])',
-
-                '\h' => '[\x09\x20]',         # not include \xA0
-                '\v' => '[\x0A\x0B\x0C\x0D]', # not include \x85
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
+                '\h' => '[\t\x20]',
+                '\v' => '[\f\n\r]',
 
             }->{$1};
         }
