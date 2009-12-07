@@ -12,7 +12,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.45 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.46 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -947,7 +947,7 @@ sub escape {
         elsif (/\G \b (q) \b /oxgc) {
             if (/\G (\#) ((?:\\\#|\\\\|$q_char)*?) (\#) /oxgc)                    { return $e . e_split_q('qr',$1,$3,$2,'');   } # q# #  --> qr # #
             else {
-                while (/\G \z/oxgc) {
+                while (not /\G \z/oxgc) {
                     if    (/\G (\s+|\#.*)                                  /oxgc) { $e .= $1; }
                     elsif (/\G (\() ((?:\\\\|\\\)|\\\(|$q_paren)*?)   (\)) /oxgc) { return $e . e_split_q('qr',$1,$3,$2,'');   } # q ( ) --> qr ( )
                     elsif (/\G (\{) ((?:\\\\|\\\}|\\\{|$q_brace)*?)   (\}) /oxgc) { return $e . e_split_q('qr',$1,$3,$2,'');   } # q { } --> qr { }
@@ -2065,7 +2065,7 @@ E_STRING_LOOP:
             elsif ($string =~ /\G \b (q) \b /oxgc) {
                 if ($string =~ /\G (\#) ((?:\\\#|\\\\|$q_char)*?) (\#) /oxgc)                    { $e_string .= e_split_q('qr',$1,$3,$2,'');   next E_STRING_LOOP; } # q# #  --> qr # #
                 else {
-                    while ($string =~ /\G \z/oxgc) {
+                    while ($string !~ /\G \z/oxgc) {
                         if    ($string =~ /\G (\s+|\#.*)                                  /oxgc) { $e_string .= $1; }
                         elsif ($string =~ /\G (\() ((?:\\\\|\\\)|\\\(|$q_paren)*?)   (\)) /oxgc) { $e_string .= e_split_q('qr',$1,$3,$2,'');   next E_STRING_LOOP; } # q ( ) --> qr ( )
                         elsif ($string =~ /\G (\{) ((?:\\\\|\\\}|\\\{|$q_brace)*?)   (\}) /oxgc) { $e_string .= e_split_q('qr',$1,$3,$2,'');   next E_STRING_LOOP; } # q { } --> qr { }

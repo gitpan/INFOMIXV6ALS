@@ -11,7 +11,7 @@ use strict;
 use 5.00503;
 use vars qw($VERSION $_warning);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.45 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.46 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -447,7 +447,7 @@ sub Einfomixv6als::split(;$$$) {
 
     # if $limit is omitted or zero, trailing null fields are stripped from the result
     if ((not defined $limit) or ($limit == 0)) {
-        while ($split[-1] eq '') {
+        while ((scalar(@split) >= 1) and ($split[-1] eq '')) {
             pop @split;
         }
     }
