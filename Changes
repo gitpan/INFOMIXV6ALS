@@ -1,5 +1,11 @@
 Revision history for this software.
 
+0.47  2010/01/02 00:00:00
+	- shorten script of EUCJP.pm and UTF2.pm.
+	- glob always function as File::DosGlob::glob.
+	- ignore use module File::DosGlob, Wildcard, Japanese and JExt.
+	; created by INABA Hitoshi
+
 0.46  2009/12/02 00:00:00
 	- fix bug of split q//.
 	; created by INABA Hitoshi

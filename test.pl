@@ -8,7 +8,7 @@
 
 BEGIN { $| = 1; print "1..1\n"; }
 
-use INFOMIXV6ALS.pm;
+use INFOMIXV6ALS;
 
 print "ok 1\n";
 

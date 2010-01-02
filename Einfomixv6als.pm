@@ -3,7 +3,7 @@ package Einfomixv6als;
 #
 # Einfomixv6als - Run-time routines for INFOMIXV6ALS.pm
 #
-# Copyright (c) 2008, 2009 INABA Hitoshi <ina@cpan.org>
+# Copyright (c) 2008, 2009, 2010 INABA Hitoshi <ina@cpan.org>
 #
 ######################################################################
 
@@ -11,7 +11,7 @@ use strict;
 use 5.00503;
 use vars qw($VERSION $_warning);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.46 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.47 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -41,28 +41,17 @@ my %range_tr = ();
 my $is_shiftjis_family = 0;
 my $is_eucjp_family    = 0;
 
+if (0) {
+}
+
 # Big5Plus
-if (__PACKAGE__ eq 'Ebig5plus') {
+elsif (__PACKAGE__ eq 'Ebig5plus') {
     %range_tr = (
         1 => [ [0x00..0x80,0xFF],
              ],
         2 => [ [0x81..0xFE],[0x40..0x7E,0x80..0xFE],
              ],
     );
-}
-
-# EUC-JP
-elsif (__PACKAGE__ eq 'Eeucjp') {
-    %range_tr = (
-        1 => [ [0x00..0x8D,0x90..0xA0,0xFF],
-             ],
-        2 => [ [0x8E..0x8E],[0xA1..0xDF],
-               [0xA1..0xFE],[0xA1..0xFE],
-             ],
-        3 => [ [0x8F..0x8F],[0xA1..0xFE],[0xA1..0xFE],
-             ],
-    );
-    $is_eucjp_family = 1;
 }
 
 # GB18030
@@ -130,6 +119,20 @@ elsif (__PACKAGE__ eq 'Euhc') {
         2 => [ [0x81..0xFE],[0x41..0x5A,0x61..0x7A,0x81..0xFE],
              ],
     );
+}
+
+# EUC-JP
+elsif (__PACKAGE__ eq 'Eeucjp') {
+    %range_tr = (
+        1 => [ [0x00..0x8D,0x90..0xA0,0xFF],
+             ],
+        2 => [ [0x8E..0x8E],[0xA1..0xDF],
+               [0xA1..0xFE],[0xA1..0xFE],
+             ],
+        3 => [ [0x8F..0x8F],[0xA1..0xFE],[0xA1..0xFE],
+             ],
+    );
+    $is_eucjp_family = 1;
 }
 
 # UTF-2
@@ -998,26 +1001,26 @@ sub _octets {
             $octets1 = sprintf('\x%02X[\x%02X-\xFF]',                            0x9F,$a2);
         }
         elsif (($a+1) == 0x9F) {
-            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|\x%02X[\x00-\xFF]',          $a,  $a2,$a+1),
+            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|\x%02X[\x00-\xFF]',          $a,  $a2,$a+1);
         }
         elsif (($a+2) == 0x9F) {
-            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|[\x%02X\x%02X][\x00-\xFF]',  $a,  $a2,$a+1,$a+2),
+            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|[\x%02X\x%02X][\x00-\xFF]',  $a,  $a2,$a+1,$a+2);
         }
         else {
-            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|[\x%02X-\x%02X][\x00-\xFF]', $a,  $a2,$a+1,$a+2),
+            $octets1 = sprintf('\x%02X[\x%02X-\xFF]|[\x%02X-\x%02X][\x00-\xFF]', $a,  $a2,$a+1,$a+2);
         }
 
         if ($z == 0xE0) {
             $octets2 = sprintf('\x%02X[\x00-\x%02X]',                                      $z,$z2);
         }
         elsif (($z-1) == 0xE0) {
-            $octets2 = sprintf('\x%02X[\x00-\xFF]|\x%02X[\x00-\x%02X]',               $z-1,$z,$z2),
+            $octets2 = sprintf('\x%02X[\x00-\xFF]|\x%02X[\x00-\x%02X]',               $z-1,$z,$z2);
         }
         elsif (($z-2) == 0xE0) {
-            $octets2 = sprintf('[\x%02X\x%02X][\x00-\xFF]|\x%02X[\x00X-\x%02X]', $z-2,$z-1,$z,$z2),
+            $octets2 = sprintf('[\x%02X\x%02X][\x00-\xFF]|\x%02X[\x00X-\x%02X]', $z-2,$z-1,$z,$z2);
         }
         else {
-            $octets2 = sprintf('[\x%02X-\x%02X][\x00-\xFF]|\x%02X[\x00-\x%02X]', 0xE0,$z-1,$z,$z2),
+            $octets2 = sprintf('[\x%02X-\x%02X][\x00-\xFF]|\x%02X[\x00-\x%02X]', 0xE0,$z-1,$z,$z2);
         }
 
         return "(?:$octets1|$octets2)";
@@ -1036,13 +1039,13 @@ sub _octets {
             $octets2 = sprintf('\x%02X[\x00-\x%02X]',                                      $z,$z2);
         }
         elsif (($z-1) == 0xA1) {
-            $octets2 = sprintf('\x%02X[\x00-\xFF]|\x%02X[\x00-\x%02X]',               $z-1,$z,$z2),
+            $octets2 = sprintf('\x%02X[\x00-\xFF]|\x%02X[\x00-\x%02X]',               $z-1,$z,$z2);
         }
         elsif (($z-2) == 0xA1) {
-            $octets2 = sprintf('[\x%02X\x%02X][\x00-\xFF]|\x%02X[\x00X-\x%02X]', $z-2,$z-1,$z,$z2),
+            $octets2 = sprintf('[\x%02X\x%02X][\x00-\xFF]|\x%02X[\x00X-\x%02X]', $z-2,$z-1,$z,$z2);
         }
         else {
-            $octets2 = sprintf('[\x%02X-\x%02X][\x00-\xFF]|\x%02X[\x00-\x%02X]', 0xA1,$z-1,$z,$z2),
+            $octets2 = sprintf('[\x%02X-\x%02X][\x00-\xFF]|\x%02X[\x00-\x%02X]', 0xA1,$z-1,$z,$z2);
         }
 
         return "(?:$octets1|$octets2)";
@@ -1239,12 +1242,19 @@ sub _charlist {
         }
 
         # single character of single octet code
+
+        # \h \v
+        #
+        # P.114 Character Class Shortcuts
+        # in Chapter 7: In the World of Regular Expressions
+        # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
+
         elsif ($char[$i] =~ m/\A (?: \\h ) \z/oxms) {
-            push @singleoctet, "\x09", "\x20";
+            push @singleoctet, "\t", "\x20";
             $i += 1;
         }
         elsif ($char[$i] =~ m/\A (?: \\v ) \z/oxms) {
-            push @singleoctet, "\x0A","\x0B","\x0C","\x0D";
+            push @singleoctet, "\f","\n","\r";
             $i += 1;
         }
         elsif ($char[$i] =~ m/\A (?: [\x00-\xFF] | \\d | \\s | \\w ) \z/oxms) {
@@ -3061,12 +3071,7 @@ sub Einfomixv6als::C_() {
 #
 sub Einfomixv6als::glob($) {
 
-    if ($^O =~ /\A (?: MSWin32 | NetWare | symbian | dos ) \z/oxms) {
-        return _dosglob(@_);
-    }
-    else {
-        return CORE::glob @_;
-    }
+    return _dosglob(@_);
 }
 
 #
@@ -3074,12 +3079,7 @@ sub Einfomixv6als::glob($) {
 #
 sub Einfomixv6als::glob_() {
 
-    if ($^O =~ /\A (?: MSWin32 | NetWare | symbian | dos ) \z/oxms) {
-        return _dosglob();
-    }
-    else {
-        return CORE::glob;
-    }
+    return _dosglob();
 }
 
 #
@@ -3103,8 +3103,17 @@ sub _dosglob {
     #
     # and File::HomeDir::Windows module
 
-    $expr =~ s{ \A ~ (?= [^/\\] ) }
-              { $ENV{'HOME'} || $ENV{'USERPROFILE'} || "$ENV{'HOMEDRIVE'}$ENV{'HOMEPATH'}" }oxmse;
+    # DOS like system
+    if ($^O =~ /\A (?: MSWin32 | NetWare | symbian | dos ) \z/oxms) {
+        $expr =~ s{ \A ~ (?= [^/\\] ) }
+                  { $ENV{'HOME'} || $ENV{'USERPROFILE'} || "$ENV{'HOMEDRIVE'}$ENV{'HOMEPATH'}" }oxmse;
+    }
+
+    # UNIX like system
+    else {
+        $expr =~ s{ \A ~ ( (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^/])* ) }
+                  { $1 ? (getpwnam($1))[7] : ($ENV{'HOME'} || $ENV{'LOGDIR'} || (getpwuid($<))[7]) }oxmse;
+    }
 
     # assume global context if not provided one
     $cxix = '_G_' if not defined $cxix;
@@ -3170,7 +3179,9 @@ OUTER:
 
         # wildcards with a drive prefix such as h:*.pm must be changed
         # to h:./*.pm to expand correctly
-        $expr =~ s# \A ((?:[A-Za-z]:)?) (\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^/\\]) #$1./$2#oxms;
+        if ($^O =~ /\A (?: MSWin32 | NetWare | symbian | dos ) \z/oxms) {
+            $expr =~ s# \A ((?:[A-Za-z]:)?) (\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^/\\]) #$1./$2#oxms;
+        }
 
         if (($head, $tail) = _parse_path($expr,$pathsep)) {
             if ($tail eq '') {
@@ -3225,8 +3236,8 @@ OUTER:
         while ($expr =~ m/ \G ($q_char) /oxgc) {
             $pattern .= {
                 '*' => "(?:$your_char)*",
-            ### '?' => "(?:$your_char)",   # UNIX style
                 '?' => "(?:$your_char)?",  # DOS style
+            #   '?' => "(?:$your_char)",   # UNIX style
                 'a' => 'A',
                 'b' => 'B',
                 'c' => 'C',
@@ -3255,8 +3266,8 @@ OUTER:
                 'z' => 'Z',
             }->{$1} || quotemeta $1;
         }
-
         my $matchsub = sub { Einfomixv6als::uc($_[0]) =~ m{\A $pattern \z}xms };
+
 #       if ($@) {
 #           print STDERR "$0: $@\n";
 #           next OUTER;
@@ -3329,6 +3340,7 @@ sub _parse_path {
     ) {
         push @subpath, $1;
     }
+
     my $tail = pop @subpath;
     my $head = join $pathsep, @subpath;
     return $head, $tail;
@@ -3865,14 +3877,7 @@ Einfomixv6als - Run-time routines for INFOMIXV6ALS.pm
     Einfomixv6als::chdir(...);
     Einfomixv6als::do(...);
     Einfomixv6als::require(...);
-
-    INFOMIXV6ALS::ord(...);
-    INFOMIXV6ALS::ord_;
-    INFOMIXV6ALS::reverse(...);
-    INFOMIXV6ALS::length(...);
-    INFOMIXV6ALS::substr(...);
-    INFOMIXV6ALS::index(...);
-    INFOMIXV6ALS::rindex(...);
+    Einfomixv6als::telldir(...);
 
   # "no Einfomixv6als;" not supported
 
@@ -4279,125 +4284,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
   See also do file.
 
-=item Order of Character
+=item current position of the readdir
 
-  $ord = INFOMIXV6ALS::ord($string);
-  $ord = INFOMIXV6ALS::ord_;
+  Einfomixv6als::telldir(DIRHANDLE);
 
-  This function returns the numeric value (ASCII or INFOMIX V6 ALS) of the first character
-  of $string. The return value is always unsigned.
-
-=item Reverse list or string
-
-  @reverse = INFOMIXV6ALS::reverse(@list);
-  $reverse = INFOMIXV6ALS::reverse(@list);
-
-  In list context, this function returns a list value consisting of the elements of
-  @list in the opposite order. The function can be used to create descending sequences:
-
-  for (INFOMIXV6ALS::reverse(1 .. 10)) { ... }
-
-  Because of the way hashes flatten into lists when passed as a @list, reverse can also
-  be used to invert a hash, presuming the values are unique:
-
-  %barfoo = INFOMIXV6ALS::reverse(%foobar);
-
-  In scalar context, the function concatenates all the elements of LIST and then returns
-  the reverse of that resulting string, character by character.
-
-=item length by INFOMIX V6 ALS character
-
-  $length = INFOMIXV6ALS::length($string);
-  $length = INFOMIXV6ALS::length();
-
-  This function returns the length in characters of the scalar value $string. If $string
-  is omitted, it returns the INFOMIXV6ALS::length of $_.
-
-  Do not try to use length to find the size of an array or hash. Use scalar @array for
-  the size of an array, and scalar keys %hash for the number of key/value pairs in a
-  hash. (The scalar is typically omitted when redundant.)
-
-  To find the length of a string in bytes rather than characters, say:
-
-  $blen = length $string;
-
-  or
-
-  $blen = CORE::length $string;
-
-=item substr by INFOMIX V6 ALS character
-
-  $substr = INFOMIXV6ALS::substr($string,$offset,$length,$replacement);
-  $substr = INFOMIXV6ALS::substr($string,$offset,$length);
-  $substr = INFOMIXV6ALS::substr($string,$offset);
-
-  This function extracts a substring out of the string given by $string and returns
-  it. The substring is extracted starting at $offset characters from the front of
-  the string.
-  If $offset is negative, the substring starts that far from the end of the string
-  instead. If $length is omitted, everything to the end of the string is returned.
-  If $length is negative, the length is calculated to leave that many characters off
-  the end of the string. Otherwise, $length indicates the length of the substring to
-  extract, which is sort of what you'd expect.
-
-  An alternative to using INFOMIXV6ALS::substr as an lvalue is to specify the $replacement
-  string as the fourth argument. This allows you to replace parts of the $string and
-  return what was there before in one operation, just as you can with splice. The next
-  example also replaces the last character of $var with "Curly" and puts that replaced
-  character into $oldstr: 
-
-  $oldstr = INFOMIXV6ALS::substr($var, -1, 1, "Curly");
-
-  If you assign something shorter than the length of your substring, the string will
-  shrink, and if you assign something longer than the length, the string will grow to
-  accommodate it. To keep the string the same length, you may need to pad or chop your
-  value using sprintf or the x operator. If you attempt to assign to an unallocated
-  area past the end of the string, INFOMIXV6ALS::substr raises an exception.
-
-  To prepend the string "Larry" to the current value of $_, use:
-
-  INFOMIXV6ALS::substr($var, 0, 0, "Larry");
-
-  To instead replace the first character of $_ with "Moe", use:
-
-  INFOMIXV6ALS::substr($var, 0, 1, "Moe");
-
-  And finally, to replace the last character of $var with "Curly", use:
-
-  INFOMIXV6ALS::substr($var, -1, 0, "Curly");
-
-=item index by INFOMIX V6 ALS character
-
-  $index = INFOMIXV6ALS::index($string,$substring,$offset);
-  $index = INFOMIXV6ALS::index($string,$substring);
-
-  This function searches for one string within another. It returns the position of
-  the first occurrence of $substring in $string. The $offset, if specified, says how
-  many characters from the start to skip before beginning to look. Positions are
-  based at 0. If the substring is not found, the function returns one less than the
-  base, ordinarily -1. To work your way through a string, you might say:
-
-  $pos = -1;
-  while (($pos = INFOMIXV6ALS::index($string, $lookfor, $pos)) > -1) {
-      print "Found at $pos\n";
-      $pos++;
-  }
-
-=item rindex by INFOMIX V6 ALS character
-
-  $rindex = INFOMIXV6ALS::rindex($string,$substring,$position);
-  $rindex = INFOMIXV6ALS::rindex($string,$substring);
-
-  This function works just like INFOMIXV6ALS::index except that it returns the position of
-  the last occurrence of $substring in $string (a reverse index). The function
-  returns -1 if not $substring is found. $position, if specified, is the rightmost
-  position that may be returned. To work your way through a string backward, say:
-
-  $pos = INFOMIXV6ALS::length($string);
-  while (($pos = INFOMIXV6ALS::rindex($string, $lookfor, $pos)) >= 0) {
-      print "Found at $pos\n";
-      $pos--;
-  }
+  This function returns the current position of the readdir routines on DIRHANDLE.
+  This value may be given to seekdir to access a particular location in a directory.
+  The function has the same caveats about possible directory compaction as the
+  corresponding system library routine. This function might not be implemented
+  everywhere that readdir is. Even if it is, no calculation may be done with the
+  return value. It's just an opaque value, meaningful only to seekdir.
 
 =back
 
