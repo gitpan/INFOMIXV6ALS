@@ -3,6 +3,8 @@ package INFOMIXV6ALS;
 #
 # INFOMIXV6ALS - "Yet Another JPerl" Source code filter to escape INFOMIX V6 ALS
 #
+#                  http://search.cpan.org/dist/INFOMIXV6ALS/
+#
 # Copyright (c) 2008, 2009, 2010 INABA Hitoshi <ina@cpan.org>
 #
 ######################################################################
@@ -12,7 +14,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.47 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.48 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -125,8 +127,9 @@ my $sub_variable  = '';   # variable of s///
 my $bind_operator = '';   # =~ or !~
 use vars qw($slash);      # when 'm//', '/' means regexp match 'm//' and '?' means regexp match '??'
                           # when 'div', '/' means division operator and '?' means conditional operator (condition ? then : else)
-my %heredoc      = ();    # here document
-my $heredoc_qq   = 0;     # here document quote type
+my @heredoc = ();         # here document
+my @heredoc_delimiter = ();
+my $here_script = '';     # here script
 my $function_ord;         # ord()   to ord()   or INFOMIXV6ALS::ord()
 my $function_ord_;        # ord     to ord     or INFOMIXV6ALS::ord_
 my $function_reverse;     # reverse to reverse or INFOMIXV6ALS::reverse
@@ -135,10 +138,10 @@ my $ignore_modules = join('|', qw(
     utf8
     I18N::Japanese
     I18N::Collate
+    I18N::JExt
     File::DosGlob
     Wildcard
     Japanese
-    JExt
 ));
 
 # in Chapter 8: Standard Modules
@@ -590,21 +593,19 @@ sub escape {
 
     if (/\G ( \n ) /oxgc) { # another member (and so on)
         my $heredoc = '';
-        if (scalar(keys %heredoc) >= 1) {
+        if (scalar(@heredoc_delimiter) >= 1) {
             $slash = 'm//';
-            my($longest_heredoc_delimiter) = sort { CORE::length($heredoc{$b}) <=> CORE::length($heredoc{$a}) } keys %heredoc;
-            if ($heredoc_qq >= 1) {
-                $heredoc = e_heredoc($heredoc{$longest_heredoc_delimiter});
-            }
-            else {
-                $heredoc =           $heredoc{$longest_heredoc_delimiter};
-            }
+
+            $heredoc = join '', @heredoc;
+            @heredoc = ();
 
             # skip here document
-            /\G .*? \n $longest_heredoc_delimiter \n/xmsgc;
+            for my $heredoc_delimiter (@heredoc_delimiter) {
+                /\G .*? \n $heredoc_delimiter \n/xmsgc;
+            }
+            @heredoc_delimiter = ();
 
-            %heredoc = ();
-            $heredoc_qq = 0;
+            $here_script = '';
         }
         return "\n" . $heredoc;
     }
@@ -1636,10 +1637,13 @@ sub escape {
         my $delimiter  = $2;
 
         # get here document
-        my $script = CORE::substr $_, pos $_;
-        $script =~ s/.*?\n//oxm;
-        if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-            $heredoc{$delimiter} = $1;
+        if ($here_script eq '') {
+            $here_script = CORE::substr $_, pos $_;
+            $here_script =~ s/.*?\n//oxm;
+        }
+        if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+            push @heredoc, $1 . qq{\n$delimiter\n};
+            push @heredoc_delimiter, $delimiter;
         }
         else {
             croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -1659,10 +1663,13 @@ sub escape {
         my $delimiter  = $2;
 
         # get here document
-        my $script = CORE::substr $_, pos $_;
-        $script =~ s/.*?\n//oxm;
-        if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-            $heredoc{$delimiter} = $1;
+        if ($here_script eq '') {
+            $here_script = CORE::substr $_, pos $_;
+            $here_script =~ s/.*?\n//oxm;
+        }
+        if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+            push @heredoc, $1 . qq{\n$delimiter\n};
+            push @heredoc_delimiter, $delimiter;
         }
         else {
             croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -1675,13 +1682,15 @@ sub escape {
         $slash = 'm//';
         my $here_quote = $1;
         my $delimiter  = $2;
-        $heredoc_qq++;
 
         # get here document
-        my $script = CORE::substr $_, pos $_;
-        $script =~ s/.*?\n//oxm;
-        if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-            $heredoc{$delimiter} = $1;
+        if ($here_script eq '') {
+            $here_script = CORE::substr $_, pos $_;
+            $here_script =~ s/.*?\n//oxm;
+        }
+        if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+            push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+            push @heredoc_delimiter, $delimiter;
         }
         else {
             croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -1694,13 +1703,15 @@ sub escape {
         $slash = 'm//';
         my $here_quote = $1;
         my $delimiter  = $2;
-        $heredoc_qq++;
 
         # get here document
-        my $script = CORE::substr $_, pos $_;
-        $script =~ s/.*?\n//oxm;
-        if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-            $heredoc{$delimiter} = $1;
+        if ($here_script eq '') {
+            $here_script = CORE::substr $_, pos $_;
+            $here_script =~ s/.*?\n//oxm;
+        }
+        if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+            push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+            push @heredoc_delimiter, $delimiter;
         }
         else {
             croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -1713,13 +1724,15 @@ sub escape {
         $slash = 'm//';
         my $here_quote = $1;
         my $delimiter  = $2;
-        $heredoc_qq++;
 
         # get here document
-        my $script = CORE::substr $_, pos $_;
-        $script =~ s/.*?\n//oxm;
-        if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-            $heredoc{$delimiter} = $1;
+        if ($here_script eq '') {
+            $here_script = CORE::substr $_, pos $_;
+            $here_script =~ s/.*?\n//oxm;
+        }
+        if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+            push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+            push @heredoc_delimiter, $delimiter;
         }
         else {
             croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -2228,10 +2241,13 @@ E_STRING_LOOP:
             my $delimiter  = $2;
 
             # get here document
-            my $script = CORE::substr $_, pos $_;
-            $script =~ s/.*?\n//oxm;
-            if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-                $heredoc{$delimiter} = $1;
+            if ($here_script eq '') {
+                $here_script = CORE::substr $_, pos $_;
+                $here_script =~ s/.*?\n//oxm;
+            }
+            if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+                push @heredoc, $1 . qq{\n$delimiter\n};
+                push @heredoc_delimiter, $delimiter;
             }
             else {
                 croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -2246,10 +2262,13 @@ E_STRING_LOOP:
             my $delimiter  = $2;
 
             # get here document
-            my $script = CORE::substr $_, pos $_;
-            $script =~ s/.*?\n//oxm;
-            if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-                $heredoc{$delimiter} = $1;
+            if ($here_script eq '') {
+                $here_script = CORE::substr $_, pos $_;
+                $here_script =~ s/.*?\n//oxm;
+            }
+            if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+                push @heredoc, $1 . qq{\n$delimiter\n};
+                push @heredoc_delimiter, $delimiter;
             }
             else {
                 croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -2262,13 +2281,15 @@ E_STRING_LOOP:
             $slash = 'm//';
             my $here_quote = $1;
             my $delimiter  = $2;
-            $heredoc_qq++;
 
             # get here document
-            my $script = CORE::substr $_, pos $_;
-            $script =~ s/.*?\n//oxm;
-            if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-                $heredoc{$delimiter} = $1;
+            if ($here_script eq '') {
+                $here_script = CORE::substr $_, pos $_;
+                $here_script =~ s/.*?\n//oxm;
+            }
+            if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+                push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+                push @heredoc_delimiter, $delimiter;
             }
             else {
                 croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -2281,13 +2302,15 @@ E_STRING_LOOP:
             $slash = 'm//';
             my $here_quote = $1;
             my $delimiter  = $2;
-            $heredoc_qq++;
 
             # get here document
-            my $script = CORE::substr $_, pos $_;
-            $script =~ s/.*?\n//oxm;
-            if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-                $heredoc{$delimiter} = $1;
+            if ($here_script eq '') {
+                $here_script = CORE::substr $_, pos $_;
+                $here_script =~ s/.*?\n//oxm;
+            }
+            if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+                push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+                push @heredoc_delimiter, $delimiter;
             }
             else {
                 croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -2300,13 +2323,15 @@ E_STRING_LOOP:
             $slash = 'm//';
             my $here_quote = $1;
             my $delimiter  = $2;
-            $heredoc_qq++;
 
             # get here document
-            my $script = CORE::substr $_, pos $_;
-            $script =~ s/.*?\n//oxm;
-            if ($script =~ /\A (.*? \n $delimiter \n) /xms) {
-                $heredoc{$delimiter} = $1;
+            if ($here_script eq '') {
+                $here_script = CORE::substr $_, pos $_;
+                $here_script =~ s/.*?\n//oxm;
+            }
+            if ($here_script =~ s/\A (.*?) \n $delimiter \n //xms) {
+                push @heredoc, e_heredoc($1) . qq{\n$delimiter\n};
+                push @heredoc_delimiter, $delimiter;
             }
             else {
                 croak "$__FILE__: Can't find string terminator $delimiter anywhere before EOF";
@@ -3972,7 +3997,13 @@ sub e_use_noparam {
             close($fh) or croak "Can't close file: $realfilename";
 
             if ($script =~ m/^ \s* use \s+ INFOMIXV6ALS \s* ([^;]*) ; \s* \n? $/oxms) {
-                return qq[BEGIN { Einfomixv6als::require '$expr'; $module->import(); }];
+
+                # P.326 UNIVERSAL: The Ultimate Ancestor Class
+                # in Chapter 12: Objects
+                # of ISBN 0-596-00027-8 Programming Perl Third Edition.
+                # (and so on)
+
+                return qq[BEGIN { Einfomixv6als::require '$expr'; $module->import() if $module->can('import'); }];
             }
             last;
         }
@@ -4001,7 +4032,7 @@ sub e_use {
             close($fh) or croak "Can't close file: $realfilename";
 
             if ($script =~ m/^ \s* use \s+ INFOMIXV6ALS \s* ([^;]*) ; \s* \n? $/oxms) {
-                return qq[BEGIN { Einfomixv6als::require '$expr'; $module->import($list); }];
+                return qq[BEGIN { Einfomixv6als::require '$expr'; $module->import($list) if $module->can('import'); }];
             }
             last;
         }
@@ -4101,6 +4132,32 @@ What's this software good for ...
 
 Let's make yet another future by JPerl's future.
 
+=head1 BASIC IDEA
+
+I discovered this mail again recently.
+
+[Tokyo.pm] jus Benkyoukai
+http://mail.pm.org/pipermail/tokyo-pm/1999-September/001854.html
+save as: SJIS.pm
+
+  package SJIS;
+  use Filter::Util::Call;
+  sub multibyte_filter {
+      my $status;
+      if (($status = filter_read()) > 0 ) {
+          s/([\x81-\x9f\xe0-\xef])([\x40-\x7e\x80-\xfc])/
+              sprintf("\\x%02x\\x%02x",ord($1),ord($2))
+          /eg;
+      }
+      $status;
+  }
+  sub import {
+      filter_add(\&multibyte_filter);
+  }
+  1;
+
+I am glad that I could confirm my idea is not so wrong.
+
 =head1 SOFTWARE COMPOSITION
 
    INFOMIXV6ALS.pm          --- source code filter to escape INFOMIX V6 ALS
@@ -4117,11 +4174,11 @@ A part of function in the script is written and changes by this software.
 
 =item * handle multiple octet string in single quote
 
-=item * handle multiple octet string in multiple quote
+=item * handle multiple octet string in double quote
 
 =item * handle multiple octet regexp in single quote
 
-=item * handle multiple octet regexp in multiple quote
+=item * handle multiple octet regexp in double quote
 
 =item * chop --> Einfomixv6als::chop
 
@@ -4157,7 +4214,7 @@ support chr(0x5C) ended path on only perl5.005 if MSWin32.
 
 =item * require --> Einfomixv6als::require
 
-=item * use Perl::Module @list; --> BEGIN { Einfomixv6als::require 'Perl/Module.pm'; Perl::Module->import(@list); }
+=item * use Perl::Module @list; --> BEGIN { Einfomixv6als::require 'Perl/Module.pm'; Perl::Module->import(@list) if Perl::Module->can('import'); }
 
 =item * use Perl::Module (); --> BEGIN { Einfomixv6als::require 'Perl/Module.pm'; }
 
@@ -4371,110 +4428,12 @@ http://bugs.activestate.com/show_bug.cgi?id=81839
 =item * /o modifier of m/$re/o, s/$re/foo/o and qr/$re/o
 
 /o modifier doesn't do operation the same as the expectation on perl5.010 on the
-Microsoft Windows Vista SP1.
+Microsoft Windows Vista SP1 and SP2.
 The latest value of variable $re is used as a regular expression.
 
 =item * Escape character \b and \B
 
 Escape character \b and \B in regular expression doesn't function like our hope.
-
-=item * here document
-
-When two or more delimiters of here documents are in one line, if any one is
-a multiple quote type(<<"END", <<END or <<`END`), then all here documents will
-escape for multiple quote type.
-
-    ex.1
-        print <<'END';
-        ============================================================
-        Escaped for SINGLE quote document.   --- OK
-        ============================================================
-        END
-
-    ex.2
-        print <<\END;
-        ============================================================
-        Escaped for SINGLE quote document.   --- OK
-        ============================================================
-        END
-
-    ex.3
-        print <<"END";
-        ============================================================
-        Escaped for DOUBLE quote document.   --- OK
-        ============================================================
-        END
-
-    ex.4
-        print <<END;
-        ============================================================
-        Escaped for DOUBLE quote document.   --- OK
-        ============================================================
-        END
-
-    ex.5
-        print <<`END`;
-        ============================================================
-        Escaped for DOUBLE quote command.   --- OK
-        ============================================================
-        END
-
-    ex.6
-        print <<'END1', <<'END2';
-        ============================================================
-        Escaped for SINGLE quote document.   --- OK
-        ============================================================
-        END1
-        ============================================================
-        Escaped for SINGLE quote document.   --- OK
-        ============================================================
-        END2
-
-    ex.7
-        print <<"END1", <<"END2";
-        ============================================================
-        Escaped for DOUBLE quote document.   --- OK
-        ============================================================
-        END1
-        ============================================================
-        Escaped for DOUBLE quote document.   --- OK
-        ============================================================
-        END2
-
-    ex.8
-        print <<'END1', <<"END2", <<'END3';
-        ============================================================
-        Escaped for DOUBLE quote document 'END1', "END2", 'END3'.
-        'END1' and 'END3' see string rewritten for "END2".
-        ============================================================
-        END1
-        ============================================================
-        Escaped for DOUBLE quote document "END2", 'END3'.
-        'END3' see string rewritten for "END2".
-        ============================================================
-        END2
-        ============================================================
-        Escaped for DOUBLE quote document "END3".
-        'END3' see string rewritten for "END2".
-        ============================================================
-        END3
-
-    ex.9
-        print <<"END1", <<'END2', <<"END3";
-        ============================================================
-        Escaped for DOUBLE quote document "END1", 'END2', "END3".
-        'END2' see string rewritten for "END1" and "END3".
-        ============================================================
-        END1
-        ============================================================
-        Escaped for DOUBLE quote document 'END2', "END3".
-        'END2' see string rewritten for "END3".
-        ============================================================
-        END2
-        ============================================================
-        Escaped for DOUBLE quote document.   --- OK
-        ============================================================
-        END3
 
 =back
 
@@ -4754,9 +4713,13 @@ I am thankful to all persons.
 
  Hirofumi Watanabe, Jperl
  http://search.cpan.org/~watanabe/
+ http://mail.pm.org/pipermail/tokyo-pm/1999-September/001854.html
 
  Dan Kogai, Encode module
  http://search.cpan.org/dist/Encode/
+
+ Tokyo-pm archive
+ http://mail.pm.org/pipermail/tokyo-pm/
 
 =cut
 

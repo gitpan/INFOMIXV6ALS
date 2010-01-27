@@ -1,5 +1,11 @@
 Revision history for this software.
 
+0.48  2010/01/28 00:00:00
+	- Call Module->import() when Module->can('import') is true only.
+	- No escape when require jcode.pl and jacode.pl.
+	- Remove limitation of two or more here-documents in a line.
+	; created by INABA Hitoshi
+
 0.47  2010/01/02 00:00:00
 	- shorten script of EUCJP.pm and UTF2.pm.
 	- glob always function as File::DosGlob::glob.

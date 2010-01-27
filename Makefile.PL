@@ -99,7 +99,7 @@ for my $target (@ARGV) {
         sysopen($fh_changes, $changes, O_RDONLY) || die "Can't open file: $changes\n";
         my $version = 0;
         while (<$fh_changes>) {
-            if (/^(\d+\.\d+)/) {
+            if (/^(\d+\.\d+(\.\d+\.\d+)*)/) {
                 if ($1 > $version) {
                     $version = $1;
                 }
@@ -126,7 +126,7 @@ for my $target (@ARGV) {
                 close $fh_metayml;
                 my $fh_metayml = Symbol::gensym();
                 if (sysopen($fh_metayml, $metayml, O_WRONLY | O_TRUNC | O_CREAT)) {
-                    s/^(version:\s*)\d+\.\d+/$1$version/m;
+                    s/^(version:\s*)\d+\.\d+(\.\d+\.\d+)*/$1$version/m;
                     binmode $fh_metayml;
                     print {$fh_metayml} $_;
                     close $fh_metayml;
