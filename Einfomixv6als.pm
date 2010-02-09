@@ -13,7 +13,7 @@ use strict;
 use 5.00503;
 use vars qw($VERSION $_warning);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.48 $ =~ m/(\d+)/xmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.49 $ =~ m/(\d+)/xmsg;
 
 use Fcntl;
 use Symbol;
@@ -783,14 +783,17 @@ sub Einfomixv6als::ignorecase(@) {
 
             # rewrite character class or escape character
             elsif (my $char = {
-                '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\d])',
-                '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
-                '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
+                '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9])',
+                '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x0A\x0C\x0D\x20])',
+                '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9A-Z_a-z])',
+                '\d' => '[0-9]',
+                '\s' => '[\x09\x0A\x0C\x0D\x20]',
+                '\w' => '[0-9A-Z_a-z]',
 
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
-                '\h' => '[\t\x20]',
-                '\v' => '[\f\n\r]',
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0C\x0A\x0D])',
+                '\h' => '[\x09\x20]',
+                '\v' => '[\x0C\x0A\x0D]',
 
                 }->{$char[$i]}
             ) {
@@ -1129,17 +1132,17 @@ sub _charlist {
                 '\b' => "\x08", # \b means backspace in character class
                 '\a' => "\a",
                 '\e' => "\e",
-                '\d' => '\d',
-                '\s' => '\s',
-                '\w' => '\w',
-                '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\d])',
-                '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
-                '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
+                '\d' => '[0-9]',
+                '\s' => '[\x09\x0A\x0C\x0D\x20]',
+                '\w' => '[0-9A-Z_a-z]',
+                '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9])',
+                '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x0A\x0C\x0D\x20])',
+                '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9A-Z_a-z])',
 
-                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
-                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
-                '\h' => '[\t\x20]',
-                '\v' => '[\f\n\r]',
+                '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
+                '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0C\x0A\x0D])',
+                '\h' => '[\x09\x20]',
+                '\v' => '[\x0C\x0A\x0D]',
 
             }->{$1};
         }

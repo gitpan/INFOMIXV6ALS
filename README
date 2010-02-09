@@ -13,6 +13,7 @@ SYNOPSIS
       perl.exe  yourscript.pl  wild*  *card  and  '*quote*'  are  ok  ...
       perl58    yourscript.pl  wild*  *card  and  '*quote*'  are  ok  ...
       perl510   yourscript.pl  wild*  *card  and  '*quote*'  are  ok  ...
+      perl512   yourscript.pl  wild*  *card  and  '*quote*'  are  ok  ...
 
 DESCRIPTION
 
@@ -33,6 +34,7 @@ To install this software, type the following:
    make.bat install           --- install to current using Perl
    perl58   make.bat install  --- install to Perl5.8
    perl510  make.bat install  --- install to Perl5.10
+   perl512  make.bat install  --- install to Perl5.12
 
 MAKE OTHER
 
@@ -45,6 +47,7 @@ PROGRAM COMPOSITION
    Einfomixv6als.pm  --- run-time routines for INFOMIXV6ALS.pm
    perl58.bat        --- find and run perl5.8  without %PATH% settings
    perl510.bat       --- find and run perl5.10 without %PATH% settings
+   perl512.bat       --- find and run perl5.12 without %PATH% settings
 
 DEPENDENCIES
 

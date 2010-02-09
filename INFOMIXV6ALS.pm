@@ -14,7 +14,7 @@ use 5.00503;
 use Einfomixv6als;
 use vars qw($VERSION);
 
-$VERSION = sprintf '%d.%02d', q$Revision: 0.48 $ =~ m/(\d+)/oxmsg;
+$VERSION = sprintf '%d.%02d', q$Revision: 0.49 $ =~ m/(\d+)/oxmsg;
 
 use Fcntl;
 use Symbol;
@@ -2388,7 +2388,7 @@ E_STRING_LOOP:
 }
 
 #
-# classic character class ( . \D \S \W \H \V \h \v )
+# classic character class ( . \D \S \W \d \s \w \H \V \h \v )
 #
 sub classic_character_class {
     my($char,$modifier) = @_;
@@ -2396,10 +2396,14 @@ sub classic_character_class {
     return {
         '.'  => ($modifier =~ /s/) ?
                 '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[\x00-\xFF])' :
-                '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\n])',
-        '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\d])',
-        '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\s])',
-        '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\w])',
+                '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0A])',
+        '\D' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9])',
+        '\S' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x0A\x0C\x0D\x20])',
+        '\W' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9A-Z_a-z])',
+        '\d' => '[0-9]',
+                 # \t  \n  \f  \r space
+        '\s' => '[\x09\x0A\x0C\x0D\x20]',
+        '\w' => '[0-9A-Z_a-z]',
 
         # \h \v \H \V
         #
@@ -2407,10 +2411,10 @@ sub classic_character_class {
         # in Chapter 7: In the World of Regular Expressions
         # of ISBN 978-0-596-52010-6 Learning Perl, Fifth Edition
 
-        '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\t\x20])',
-        '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\f\n\r])',
-        '\h' => '[\t\x20]',
-        '\v' => '[\f\n\r]',
+        '\H' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])',
+        '\V' => '(?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0C\x0A\x0D])',
+        '\h' => '[\x09\x20]',
+        '\v' => '[\x0C\x0A\x0D]',
 
     }->{$char};
 }
@@ -4101,8 +4105,10 @@ Japanization modifier Hirofumi Watanabe said,
 
   "Because Watanabe am tired I give over maintaing JPerl."
 
-at Slide #15: "The future of JPerl"
-of L<ftp://ftp.oreilly.co.jp/pcjp98/watanabe/jperlconf.ppt>
+at Slide #15: "The future of JPerl" of
+
+L<ftp://ftp.oreilly.co.jp/pcjp98/watanabe/jperlconf.ppt>
+
 in The Perl Confernce Japan 1998.
 
 When I heard it, I thought that someone excluding me would maintain JPerl.
@@ -4137,7 +4143,9 @@ Let's make yet another future by JPerl's future.
 I discovered this mail again recently.
 
 [Tokyo.pm] jus Benkyoukai
+
 http://mail.pm.org/pipermail/tokyo-pm/1999-September/001854.html
+
 save as: SJIS.pm
 
   package SJIS;
@@ -4164,6 +4172,26 @@ I am glad that I could confirm my idea is not so wrong.
    Einfomixv6als.pm         --- run-time routines for INFOMIXV6ALS.pm
    perl58.bat       --- find and run perl5.8  without %PATH% settings
    perl510.bat      --- find and run perl5.10 without %PATH% settings
+   perl512.bat      --- find and run perl5.12 without %PATH% settings
+
+=head1 CHARACTER CLASSES
+
+The character classes are redefined as follows to backward compatibility.
+
+  ---------------------------------------------------------------------------
+  escape        class
+  ---------------------------------------------------------------------------
+  \d            [0-9]
+  \s            [\x09\x0A\x0C\x0D\x20]
+  \w            [0-9A-Z_a-z]
+  \D            (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9])
+  \S            (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x0A\x0C\x0D\x20])
+  \W            (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^0-9A-Z_a-z])
+  \h            [\x09\x20]
+  \v            [\x0C\x0A\x0D]
+  \H            (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x09\x20])
+  \V            (?:\xFD[\xA1-\xFE][\xA1-\xFE]|[\x81-\x9F\xE0-\xFC][\x00-\xFF]|[^\x0C\x0A\x0D])
+  ---------------------------------------------------------------------------
 
 =head1 JPerl COMPATIBLE FUNCTIONS
 
@@ -4427,8 +4455,7 @@ http://bugs.activestate.com/show_bug.cgi?id=81839
 
 =item * /o modifier of m/$re/o, s/$re/foo/o and qr/$re/o
 
-/o modifier doesn't do operation the same as the expectation on perl5.010 on the
-Microsoft Windows Vista SP1 and SP2.
+/o modifier doesn't do operation the same as the expectation on perl5.6.1.
 The latest value of variable $re is used as a regular expression.
 
 =item * Escape character \b and \B
